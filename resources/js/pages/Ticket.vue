@@ -36,7 +36,7 @@ function print() {
             >
                 <div>
                     <span class="text-[10px] tracking-[0.2em] text-teal-200"
-                        >KLINIK SEHAT / TIKET KUNJUNGAN</span
+                        >HOSPIA / TIKET KUNJUNGAN</span
                     >
                     <h2 class="mt-3 text-xl font-semibold">
                         {{ reservation.patient.user.name }}

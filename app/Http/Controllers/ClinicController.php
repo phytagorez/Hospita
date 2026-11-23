@@ -13,14 +13,20 @@ use Inertia\Response;
 
 class ClinicController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(): Response
     {
-        return Inertia::render('Welcome', ['polyclinics' => Polyclinic::where('is_active', true)->get(), ...$this->scheduleData($request)]);
+        return Inertia::render('Welcome', ['polyclinics' => Polyclinic::where('is_active', true)->orderBy('name')->get()]);
     }
 
     public function schedules(Request $request): Response
     {
-        return Inertia::render('Schedules', ['polyclinics' => Polyclinic::where('is_active', true)->get(), ...$this->scheduleData($request)]);
+        $activeReservation = $request->user()->patientProfile?->reservations()->pending()->orderBy('reservation_date')->first();
+
+        return Inertia::render('Schedules', [
+            'polyclinics' => Polyclinic::where('is_active', true)->orderBy('name')->get(),
+            'activeReservation' => $activeReservation?->only(['id', 'booking_code', 'reservation_date']),
+            ...$this->scheduleData($request),
+        ]);
     }
 
     public function dashboard(Request $request): Response|RedirectResponse
@@ -46,6 +52,17 @@ class ClinicController extends Controller
                 'walk_in' => $today->where('booking_type', 'walk_in')->count(), 'completed' => $today->where('status', 'completed')->count()],
             'reservations' => (clone $query)->whereDate('reservation_date', '>=', today())->whereIn('status', ['booked', 'waiting', 'examining', 'skipped'])->orderBy('reservation_date')->orderBy('queue_number')->limit(20)->get(),
             'monitor' => $this->monitor(), 'week' => $admin ? $week : [],
+            'adminOverview' => $admin ? [
+                'schedules' => DoctorSchedule::with('doctor.polyclinic')
+                    ->where('day_of_week', today()->dayOfWeek)->where('is_active', true)
+                    ->whereHas('doctor', fn ($doctor) => $doctor->where('is_active', true)
+                        ->whereHas('polyclinic', fn ($poli) => $poli->where('is_active', true)))
+                    ->orderBy('start_time')->get(),
+                'services' => $today->groupBy('schedule.doctor.polyclinic.id')
+                    ->map(fn ($items) => ['name' => $items->first()->schedule->doctor->polyclinic->name, 'count' => $items->count()])
+                    ->sortByDesc('count')->values(),
+                'date' => today()->translatedFormat('l, d F Y'),
+            ] : null,
         ]);
     }
 
@@ -68,11 +85,19 @@ class ClinicController extends Controller
             ->when($data['polyclinic'] ?? null, fn ($query, $id) => $query->whereHas('doctor', fn ($doctor) => $doctor->where('polyclinic_id', $id)))
             ->withCount(['reservations as booked_count' => fn ($query) => $query->whereDate('reservation_date', $date)->where('status', '!=', 'cancelled')])
             ->orderBy('start_time')->get()->map(function (DoctorSchedule $schedule) use ($date) {
-                $schedule->setAttribute('remaining', max(0, $schedule->max_quota - $schedule->booked_count));
-                $schedule->setAttribute('available', $schedule->closed_date?->toDateString() !== $date && Carbon::parse($date.' '.$schedule->start_time)->gt(now()));
+                $remaining = max(0, $schedule->max_quota - $schedule->booked_count);
+                $schedule->setAttribute('remaining', $remaining);
+                $reason = match (true) {
+                    $schedule->closed_date?->toDateString() === $date => 'Jadwal ditutup',
+                    Carbon::parse($date.' '.$schedule->start_time)->lte(now()) => 'Sesi sudah dimulai',
+                    $remaining === 0 => 'Kuota penuh',
+                    default => null,
+                };
+                $schedule->setAttribute('available', $reason === null);
+                $schedule->setAttribute('unavailable_reason', $reason);
 
                 return $schedule;
-            });
+            })->sortBy([['available', 'desc'], ['start_time', 'asc'], ['id', 'asc']])->values();
 
         return ['schedules' => $schedules, 'filters' => ['date' => $date, 'polyclinic' => $data['polyclinic'] ?? ''], 'today' => today()->toDateString(), 'maxDate' => today()->addDays(30)->toDateString()];
     }

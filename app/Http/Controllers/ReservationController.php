@@ -21,6 +21,11 @@ class ReservationController extends Controller
         if (! $request->user()->patientProfile) {
             return redirect()->route('patient.profile');
         }
+        $activeReservation = $request->user()->patientProfile->reservations()->pending()->first();
+        if ($activeReservation) {
+            return redirect()->route('reservations.show', $activeReservation)
+                ->with('error', 'Anda masih memiliki satu janji aktif. Selesaikan atau batalkan janji tersebut sebelum membuat janji baru.');
+        }
         $data = $request->validate([
             'date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:today', 'before_or_equal:'.today()->addDays(30)->toDateString()],
             'schedule' => ['nullable', 'integer', 'exists:doctor_schedules,id'],

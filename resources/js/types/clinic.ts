@@ -33,6 +33,7 @@ export type Schedule = {
     closed_date: string | null;
     remaining?: number;
     available?: boolean;
+    unavailable_reason?: string | null;
 };
 export type Patient = {
     id: number;

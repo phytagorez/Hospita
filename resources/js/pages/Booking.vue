@@ -134,8 +134,9 @@ function changeDate() {
                 </p>
                 <p class="mt-4 text-xs leading-6 text-slate-500">
                     Pembatalan mandiri tersedia sebelum sesi dimulai dan sebelum
-                    check-in. Satu pasien hanya dapat memiliki satu reservasi
-                    per poli per tanggal.
+                    check-in. Satu pasien hanya dapat memiliki satu janji aktif.
+                    Selesaikan atau batalkan janji sebelumnya untuk membuat
+                    janji baru.
                 </p>
             </aside>
         </div>

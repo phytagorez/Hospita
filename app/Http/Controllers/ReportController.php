@@ -53,7 +53,7 @@ class ReportController extends Controller
             if ($data['format'] === 'xlsx') {
                 return response($report->spreadsheet($rows), 200, ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Content-Disposition' => 'attachment; filename="laporan-klinik.xlsx"', 'Cache-Control' => 'private, no-store']);
             }
-            $lines = ['KLINIK SEHAT - LAPORAN KUNJUNGAN', $from.' s/d '.$to, 'Total kunjungan: '.(count($rows) - 1).' | Pendapatan: Rp '.number_format($summary->sum('revenue'), 0, ',', '.'), ''];
+            $lines = ['HOSPIA - LAPORAN KUNJUNGAN', $from.' s/d '.$to, 'Total kunjungan: '.(count($rows) - 1).' | Pendapatan: Rp '.number_format($summary->sum('revenue'), 0, ',', '.'), ''];
             array_push($lines, ...$details);
 
             return response($report->pdf($lines), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="laporan-klinik.pdf"', 'Cache-Control' => 'private, no-store']);

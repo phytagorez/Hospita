@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Database\Factories\ReservationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -38,7 +40,14 @@ class Reservation extends Model
         return ['reservation_date' => 'date:Y-m-d', 'checked_in_at' => 'datetime'];
     }
 
-    public const ACTIVE = ['booked', 'waiting', 'examining', 'completed', 'skipped'];
+    public const PENDING = ['booked', 'waiting', 'examining', 'skipped'];
+
+    /** @param Builder<Reservation> $query */
+    #[Scope]
+    protected function pending(Builder $query): void
+    {
+        $query->whereIn('status', self::PENDING)->whereDate('reservation_date', '>=', today());
+    }
 
     /** @return BelongsTo<PatientProfile, $this> */
     public function patient(): BelongsTo

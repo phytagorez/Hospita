@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import ClinicLayout from '@/components/ClinicLayout.vue';
 import { store } from '@/routes/login';
 import { redirect } from '@/routes/google';
 defineProps<{ googleEnabled: boolean; localMode: boolean }>();
 const form = useForm({ email: '', password: '', remember: false });
+const showPassword = ref(false);
 </script>
 <template>
     <ClinicLayout
         title="Senang melihat Anda kembali."
-        eyebrow="AKSES KLINIK SEHAT"
+        eyebrow="AKSES HOSPIA"
         description="Masuk untuk mengelola kunjungan dan mendapatkan layanan yang lebih terencana."
     >
         <div
@@ -76,15 +78,50 @@ const form = useForm({ email: '', password: '', remember: false });
                         type="email"
                         autocomplete="username"
                         required
-                        placeholder="nama@klinik.test" /></label
-                ><label class="field"
-                    >Kata sandi<input
-                        v-model="form.password"
-                        type="password"
-                        autocomplete="current-password"
-                        required
-                        placeholder="Masukkan kata sandi" /></label
-                ><label class="flex items-center gap-2 text-sm text-slate-500"
+                        placeholder="nama@klinik.test"
+                /></label>
+                <div class="field">
+                    <label for="password">Kata sandi</label>
+                    <div class="relative">
+                        <input
+                            id="password"
+                            v-model="form.password"
+                            :type="showPassword ? 'text' : 'password'"
+                            class="pr-14"
+                            autocomplete="current-password"
+                            required
+                            placeholder="Masukkan kata sandi"
+                        />
+                        <button
+                            type="button"
+                            class="absolute inset-y-0 right-1 flex w-12 items-center justify-center rounded-lg text-slate-500 hover:text-teal-700 focus-visible:outline-2 focus-visible:outline-teal-600 dark:hover:text-teal-300"
+                            :aria-label="
+                                showPassword
+                                    ? 'Sembunyikan kata sandi'
+                                    : 'Tampilkan kata sandi'
+                            "
+                            :aria-pressed="showPassword"
+                            aria-controls="password"
+                            @click="showPassword = !showPassword"
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                aria-hidden="true"
+                                class="size-5"
+                            >
+                                <path
+                                    d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"
+                                />
+                                <circle cx="12" cy="12" r="3" />
+                                <path v-if="showPassword" d="m3 3 18 18" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <label class="flex items-center gap-2 text-sm text-slate-500"
                     ><input
                         v-model="form.remember"
                         type="checkbox"

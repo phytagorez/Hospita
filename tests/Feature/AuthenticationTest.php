@@ -7,7 +7,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 test('public pages load and private pages redirect guests to login', function () {
     $this->get(route('home'))->assertOk();
-    $this->get(route('schedules'))->assertOk();
+    $this->get(route('schedules'))->assertRedirect(route('login'));
     $this->get(route('login'))->assertOk();
     $this->get(route('dashboard'))->assertRedirect(route('login'));
     $this->get(route('admin.queue.index'))->assertRedirect(route('login'));
@@ -127,9 +127,9 @@ test('Google network failure returns to login without creating a user', function
 });
 
 test('malformed dates do not crash schedule or booking pages', function () {
-    $this->get(route('schedules', ['date' => 'not-a-date']))->assertSessionHasErrors(['date']);
     $patient = PatientProfile::factory()->create();
 
+    $this->actingAs($patient->user)->get(route('schedules', ['date' => 'not-a-date']))->assertSessionHasErrors(['date']);
     $this->actingAs($patient->user)->get(route('reservations.create', ['date' => 'not-a-date']))->assertSessionHasErrors(['date']);
 });
 

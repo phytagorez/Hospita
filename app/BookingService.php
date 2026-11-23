@@ -25,10 +25,8 @@ class BookingService
                 || $visit->lt(today()) || $visit->gt(today()->addDays(30)) || ($type === 'online' ? $start->lte(now()) : $end->lte(now()))) {
                 throw ValidationException::withMessages(['schedule_id' => 'Jadwal tidak tersedia atau sesi telah ditutup.']);
             }
-            $duplicate = $patient->reservations()->whereDate('reservation_date', $date)->whereIn('status', Reservation::ACTIVE)
-                ->whereHas('schedule.doctor', fn ($query) => $query->where('polyclinic_id', $schedule->doctor->polyclinic_id))->exists();
-            if ($duplicate) {
-                throw ValidationException::withMessages(['schedule_id' => 'Anda sudah memiliki reservasi di poli ini pada tanggal yang sama.']);
+            if ($patient->reservations()->pending()->exists()) {
+                throw ValidationException::withMessages(['schedule_id' => 'Anda masih memiliki satu janji aktif. Selesaikan atau batalkan janji tersebut sebelum membuat janji baru.']);
             }
             $session = Reservation::where('schedule_id', $scheduleId)->whereDate('reservation_date', $date);
             if ((clone $session)->where('status', '!=', 'cancelled')->count() >= $schedule->max_quota) {

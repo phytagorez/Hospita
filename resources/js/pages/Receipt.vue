@@ -22,7 +22,7 @@ function print() {
                     <h2
                         class="text-2xl font-bold text-teal-800 dark:text-teal-300"
                     >
-                        kliniksehat.
+                        Hospia
                     </h2>
                     <p class="mt-2 text-xs text-slate-500">
                         Administrasi & konsultasi

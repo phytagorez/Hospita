@@ -1,17 +1,27 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { create } from '@/routes/reservations';
-import { login } from '@/routes';
+import { create, show } from '@/routes/reservations';
 import { money, type Schedule } from '@/types/clinic';
-defineProps<{ schedules: Schedule[]; date: string }>();
+
+defineProps<{
+    schedules: Schedule[];
+    date: string;
+    activeReservationId?: number | null;
+}>();
 const page = usePage();
 </script>
+
 <template>
     <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         <article
             v-for="schedule in schedules"
             :key="schedule.id"
-            class="card flex flex-col gap-5"
+            :class="[
+                'card flex flex-col gap-5',
+                schedule.available
+                    ? 'border-teal-200 dark:border-teal-800'
+                    : 'bg-slate-50/70 dark:bg-slate-900/70',
+            ]"
         >
             <div class="flex items-start justify-between gap-3">
                 <span
@@ -51,7 +61,7 @@ const page = usePage();
                 class="flex justify-between border-y border-slate-100 py-4 text-sm dark:border-slate-800"
             >
                 <span
-                    >{{ schedule.start_time.slice(0, 5) }} –
+                    >{{ schedule.start_time.slice(0, 5) }} -
                     {{ schedule.end_time.slice(0, 5) }} WIB</span
                 ><span class="font-medium"
                     >{{ money(schedule.doctor.polyclinic.base_admin_fee)
@@ -61,39 +71,55 @@ const page = usePage();
                     ></span
                 >
             </div>
-            <div class="flex items-center justify-between gap-3">
-                <span
-                    :class="[
-                        'text-xs',
-                        schedule.remaining && schedule.available
-                            ? 'text-teal-700 dark:text-teal-400'
-                            : 'text-slate-400',
-                    ]"
-                    >{{
-                        !schedule.available
-                            ? 'Sesi ditutup'
-                            : schedule.remaining
-                              ? schedule.remaining + ' kuota tersedia'
-                              : 'Kuota penuh'
-                    }}</span
-                ><Link
-                    v-if="
-                        schedule.available &&
-                        schedule.remaining &&
-                        page.props.auth.user?.role !== 'admin'
-                    "
-                    :href="
-                        page.props.auth.user
-                            ? create({ query: { schedule: schedule.id, date } })
-                            : login()
-                    "
-                    class="btn text-xs"
-                    >Buat janji ↗</Link
-                ><span v-else class="text-xs text-slate-400">{{
-                    page.props.auth.user?.role === 'admin'
-                        ? 'Sesi praktik'
-                        : 'Tidak tersedia'
-                }}</span>
+            <div
+                class="mt-auto flex flex-wrap items-center justify-between gap-3"
+            >
+                <div>
+                    <span
+                        :class="[
+                            'inline-flex rounded-full px-2.5 py-1 text-xs font-semibold',
+                            schedule.available
+                                ? 'bg-teal-50 text-teal-800 dark:bg-teal-950 dark:text-teal-300'
+                                : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
+                        ]"
+                        >{{
+                            schedule.available
+                                ? 'Tersedia'
+                                : schedule.unavailable_reason ||
+                                  'Tidak tersedia'
+                        }}</span
+                    >
+                    <p
+                        v-if="schedule.available"
+                        class="mt-2 text-xs text-teal-700 dark:text-teal-400"
+                    >
+                        {{ schedule.remaining }} kuota tersisa
+                    </p>
+                </div>
+                <template v-if="page.props.auth.user?.role === 'patient'">
+                    <Link
+                        v-if="activeReservationId"
+                        :href="show(activeReservationId)"
+                        class="btn-secondary text-xs"
+                        >Janji aktif saya</Link
+                    >
+                    <Link
+                        v-else-if="schedule.available && schedule.remaining"
+                        :href="
+                            create({ query: { schedule: schedule.id, date } })
+                        "
+                        class="btn text-xs"
+                        >Buat janji ↗</Link
+                    >
+                    <button
+                        v-else
+                        type="button"
+                        disabled
+                        class="cursor-not-allowed rounded-xl bg-slate-100 px-4 py-2.5 text-xs font-medium text-slate-400 dark:bg-slate-800"
+                    >
+                        Tidak dapat dipesan
+                    </button>
+                </template>
             </div>
         </article>
         <div
