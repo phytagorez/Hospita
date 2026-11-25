@@ -1,4 +1,11 @@
-import { createInertiaApp } from '@inertiajs/vue3';
+import { createInertiaApp, router } from '@inertiajs/vue3';
+
+import { showError } from '@/lib/alerts';
+
+router.on('error', ({ detail: { errors } }) => {
+    const messages = [...new Set(Object.values(errors).flat())].filter(Boolean);
+    if (messages.length) showError(messages.join('\n'));
+});
 
 const appName = import.meta.env.VITE_APP_NAME || 'Hospia';
 
@@ -14,6 +21,6 @@ void createInertiaApp({
         });
     },
     progress: {
-        color: '#4B5563',
+        color: '#1d4ed8',
     },
 });

@@ -15,19 +15,19 @@ const showPassword = ref(false);
         description="Masuk untuk mengelola kunjungan dan mendapatkan layanan yang lebih terencana."
     >
         <div
-            class="mx-auto grid max-w-4xl overflow-hidden rounded-3xl border border-slate-200 bg-white md:grid-cols-2 dark:border-slate-800 dark:bg-slate-900"
+            class="mx-auto grid max-w-4xl overflow-hidden rounded-3xl border border-slate-200 bg-white @min-[42rem]/content:grid-cols-2 dark:border-slate-800 dark:bg-slate-900"
         >
             <section
-                class="flex flex-col justify-between gap-12 bg-teal-900 p-9 text-white"
+                class="flex min-w-0 flex-col justify-between gap-7 bg-blue-900 p-[clamp(1.25rem,4cqi,2.25rem)] text-white"
             >
                 <div>
-                    <span class="text-xs tracking-[0.2em] text-teal-200"
+                    <span class="text-xs tracking-[0.2em] text-blue-200"
                         >UNTUK PASIEN</span
                     >
                     <h2 class="mt-5 text-3xl leading-tight font-semibold">
                         Perawatan dimulai<br />dari satu langkah.
                     </h2>
-                    <p class="mt-4 text-sm leading-7 text-teal-100/80">
+                    <p class="mt-4 text-sm leading-7 text-blue-100/80">
                         Gunakan akun Google Anda. Setelah masuk, lengkapi
                         identitas untuk mendapatkan nomor rekam medis digital.
                     </p>
@@ -36,13 +36,13 @@ const showPassword = ref(false);
                     <a
                         v-if="googleEnabled"
                         :href="redirect.url()"
-                        class="flex items-center justify-center gap-3 rounded-xl bg-white p-3 text-sm font-semibold text-teal-900"
+                        class="flex items-center justify-center gap-3 rounded-xl bg-white p-3 text-sm font-semibold text-blue-900"
                         ><span class="font-bold">G</span> Lanjutkan dengan
                         Google</a
                     >
                     <p
                         v-else
-                        class="rounded-xl border border-white/20 p-4 text-sm leading-6 text-teal-100"
+                        class="rounded-xl border border-white/20 p-4 text-sm leading-6 text-blue-100"
                     >
                         Login Google sedang disiapkan oleh pengelola.<span
                             v-if="localMode"
@@ -54,7 +54,7 @@ const showPassword = ref(false);
                 </div>
             </section>
             <form
-                class="flex flex-col gap-5 p-9"
+                class="flex min-w-0 flex-col gap-5 p-[clamp(1.25rem,4cqi,2.25rem)]"
                 @submit.prevent="
                     form.post(store().url, {
                         onFinish: () => form.reset('password'),
@@ -94,7 +94,7 @@ const showPassword = ref(false);
                         />
                         <button
                             type="button"
-                            class="absolute inset-y-0 right-1 flex w-12 items-center justify-center rounded-lg text-slate-500 hover:text-teal-700 focus-visible:outline-2 focus-visible:outline-teal-600 dark:hover:text-teal-300"
+                            class="absolute inset-y-0 right-1 flex w-12 items-center justify-center rounded-lg text-slate-500 hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-blue-600 dark:hover:text-blue-300"
                             :aria-label="
                                 showPassword
                                     ? 'Sembunyikan kata sandi'
@@ -125,7 +125,7 @@ const showPassword = ref(false);
                     ><input
                         v-model="form.remember"
                         type="checkbox"
-                        class="size-4 accent-teal-700"
+                        class="size-4 accent-blue-700"
                     />
                     Ingat saya</label
                 ><button class="btn justify-center" :disabled="form.processing">

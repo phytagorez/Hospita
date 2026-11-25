@@ -157,3 +157,13 @@ test('ticket and QR load for their owner', function () {
     $this->get(route('reservations.show', $reservation))->assertOk()->assertInertia(fn (Assert $page) => $page->component('Ticket')->where('canCancel', true)->where('estimate', '08:00'));
     $this->get(route('reservations.qr', $reservation))->assertOk()->assertHeader('Content-Type', 'image/svg+xml')->assertSee('<svg', false);
 });
+
+test('admins can view the reservation record without receiving a patient check-in QR', function () {
+    $reservation = Reservation::factory()->create();
+    $this->actingAs(User::factory()->admin()->create());
+
+    $this->get(route('reservations.show', $reservation))->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->component('ReservationRecord')
+            ->where('record.id', $reservation->id)->missing('record.booking_code')->missing('reservation'));
+    $this->get(route('reservations.qr', $reservation))->assertNotFound();
+});

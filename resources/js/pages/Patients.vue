@@ -29,8 +29,13 @@ const search = ref(props.search);
         <p class="mb-4 text-xs text-slate-500">
             {{ patients.total }} pasien ditemukan
         </p>
-        <div class="table-wrap">
-            <table class="w-full whitespace-nowrap">
+        <div
+            class="table-wrap"
+            role="region"
+            tabindex="0"
+            aria-label="Daftar pasien"
+        >
+            <table class="w-full">
                 <thead>
                     <tr>
                         <th>Pasien</th>
@@ -51,7 +56,7 @@ const search = ref(props.search);
                         <td>
                             <Link
                                 :href="show(patient.id)"
-                                class="text-xs font-semibold text-teal-700 dark:text-teal-400"
+                                class="text-xs font-semibold text-blue-700 dark:text-blue-400"
                                 >Detail & riwayat →</Link
                             >
                         </td>

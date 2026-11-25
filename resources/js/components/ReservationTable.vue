@@ -1,13 +1,19 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import StatusBadge from '@/components/StatusBadge.vue';
 import { show, receipt } from '@/routes/reservations';
 import { dateLabel, queueLabel, type Reservation } from '@/types/clinic';
+const page = usePage();
 defineProps<{ reservations: Reservation[]; showPatient?: boolean }>();
 </script>
 <template>
-    <div class="table-wrap">
-        <table class="w-full whitespace-nowrap">
+    <div
+        class="table-wrap"
+        role="region"
+        tabindex="0"
+        aria-label="Daftar reservasi"
+    >
+        <table class="w-full">
             <thead>
                 <tr>
                     <th>Tiket / tanggal</th>
@@ -23,8 +29,12 @@ defineProps<{ reservations: Reservation[]; showPatient?: boolean }>();
                     <td>
                         <Link
                             :href="show(item.id)"
-                            class="font-mono text-xs font-semibold text-teal-700 dark:text-teal-400"
-                            >{{ item.booking_code }}</Link
+                            class="font-mono text-xs font-semibold text-blue-700 dark:text-blue-400"
+                            >{{
+                                page.props.auth.user?.role === 'admin'
+                                    ? 'Arsip #' + item.id
+                                    : item.booking_code
+                            }}</Link
                         ><small class="mt-1 block text-xs text-slate-400">{{
                             dateLabel(item.reservation_date)
                         }}</small>
@@ -45,7 +55,7 @@ defineProps<{ reservations: Reservation[]; showPatient?: boolean }>();
                         <Link
                             v-if="item.transaction"
                             :href="receipt(item.id)"
-                            class="text-xs font-semibold text-teal-700 dark:text-teal-400"
+                            class="text-xs font-semibold text-blue-700 dark:text-blue-400"
                             >Lihat nota ↗</Link
                         ><Link
                             v-else

@@ -15,7 +15,7 @@ defineProps<{ patient: Patient; reservations: Pagination<Reservation> }>();
         :title="patient.user.name"
         description="Identitas dasar dan riwayat kedatangan pasien."
         ><div
-            class="card mb-8 grid gap-6 text-sm sm:grid-cols-2 xl:grid-cols-3"
+            class="card mb-8 grid gap-6 text-sm @min-[27rem]/content:grid-cols-2 @min-[55rem]/content:grid-cols-3"
         >
             <div>
                 <p class="section-kicker">NO. REKAM MEDIS</p>

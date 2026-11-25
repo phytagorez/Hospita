@@ -18,7 +18,13 @@ class ReservationController extends Controller
 {
     public function create(Request $request): Response|RedirectResponse
     {
+        $data = $request->validate([
+            'date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:today', 'before_or_equal:'.today()->addDays(30)->toDateString()],
+            'schedule' => ['nullable', 'integer', 'min:1'],
+        ]);
         if (! $request->user()->patientProfile) {
+            $request->session()->put('pending_booking', $data);
+
             return redirect()->route('patient.profile');
         }
         $activeReservation = $request->user()->patientProfile->reservations()->pending()->first();
@@ -26,23 +32,19 @@ class ReservationController extends Controller
             return redirect()->route('reservations.show', $activeReservation)
                 ->with('error', 'Anda masih memiliki satu janji aktif. Selesaikan atau batalkan janji tersebut sebelum membuat janji baru.');
         }
-        $data = $request->validate([
-            'date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:today', 'before_or_equal:'.today()->addDays(30)->toDateString()],
-            'schedule' => ['nullable', 'integer', 'exists:doctor_schedules,id'],
-        ]);
         $date = $data['date'] ?? today()->toDateString();
-        $schedules = DoctorSchedule::with('doctor.polyclinic')->where('day_of_week', Carbon::parse($date)->dayOfWeek)->where('is_active', true)
-            ->whereHas('doctor', fn ($query) => $query->where('is_active', true)->whereHas('polyclinic', fn ($poli) => $poli->where('is_active', true)))
-            ->where(fn ($query) => $query->whereNull('closed_date')->orWhere('closed_date', '!=', $date))
-            ->withCount(['reservations as booked_count' => fn ($query) => $query->whereDate('reservation_date', $date)->where('status', '!=', 'cancelled')])
-            ->orderBy('start_time')->get()->filter(fn ($schedule) => Carbon::parse($date.' '.$schedule->start_time)->gt(now()))
-            ->map(function ($schedule) {
-                $schedule->setAttribute('remaining', max(0, $schedule->max_quota - $schedule->booked_count));
+        $schedules = DoctorSchedule::patientSessions($date)->get()
+            ->map(fn (DoctorSchedule $schedule) => $schedule->availabilityOn($date))
+            ->where('available', true)->values();
+        $scheduleId = (int) ($data['schedule'] ?? 0);
 
-                return $schedule;
-            })->values();
-
-        return Inertia::render('Booking', ['scheduleId' => (int) ($data['schedule'] ?? 0), 'date' => $date, 'schedules' => $schedules, 'today' => today()->toDateString(), 'maxDate' => today()->addDays(30)->toDateString()]);
+        return Inertia::render('Booking', [
+            'scheduleId' => $schedules->contains('id', $scheduleId) ? $scheduleId : 0,
+            'date' => $date,
+            'schedules' => $schedules,
+            'today' => today()->toDateString(),
+            'maxDate' => today()->addDays(30)->toDateString(),
+        ]);
     }
 
     public function store(ReservationRequest $request, BookingService $booking): RedirectResponse
@@ -59,6 +61,23 @@ class ReservationController extends Controller
     public function show(Request $request, Reservation $reservation): Response
     {
         $this->authorizeOwner($request, $reservation);
+        if ($request->user()->role === 'admin') {
+            $reservation->load(['patient.user', 'schedule.doctor.polyclinic']);
+
+            return Inertia::render('ReservationRecord', ['record' => [
+                'id' => $reservation->id,
+                'name' => $reservation->patient->user->name,
+                'medicalNumber' => $reservation->patient->no_rm,
+                'date' => $reservation->reservation_date->toDateString(),
+                'doctor' => $reservation->schedule->doctor->name,
+                'polyclinic' => $reservation->schedule->doctor->polyclinic->name,
+                'startTime' => $reservation->schedule->start_time,
+                'endTime' => $reservation->schedule->end_time,
+                'queueNumber' => $reservation->queue_number,
+                'status' => $reservation->status,
+                'complaint' => $reservation->complaint,
+            ]]);
+        }
         $reservation->load(['patient.user', 'schedule.doctor.polyclinic', 'transaction']);
         $start = Carbon::parse($reservation->reservation_date->toDateString().' '.$reservation->schedule->start_time);
         $duration = $start->diffInMinutes(Carbon::parse($reservation->reservation_date->toDateString().' '.$reservation->schedule->end_time));
@@ -86,6 +105,8 @@ class ReservationController extends Controller
     public function qr(Request $request, Reservation $reservation, QrCode $qr): HttpResponse
     {
         $this->authorizeOwner($request, $reservation);
+
+        abort_unless($request->user()->role === 'patient', 404);
 
         return response($qr->svg($reservation->booking_code), 200, ['Content-Type' => 'image/svg+xml', 'Cache-Control' => 'private, no-store']);
     }

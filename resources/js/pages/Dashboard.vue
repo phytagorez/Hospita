@@ -56,7 +56,7 @@ usePoll(10000, {
         <template v-else>
             <div class="mb-7 flex flex-wrap items-center justify-between gap-4">
                 <span class="flex items-center gap-2 text-xs text-slate-500"
-                    ><span class="size-2 rounded-full bg-teal-500"></span> Data
+                    ><span class="size-2 rounded-full bg-blue-500"></span> Data
                     diperbarui setiap 10 detik · WIB</span
                 ><Link
                     :href="
@@ -72,7 +72,9 @@ usePoll(10000, {
                     }}</Link
                 >
             </div>
-            <div class="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div
+                class="mb-8 grid gap-4 @min-[26rem]/content:grid-cols-2 @min-[53rem]/content:grid-cols-4"
+            >
                 <div
                     v-for="item in [
                         {
@@ -114,7 +116,7 @@ usePoll(10000, {
                     </p>
                 </div>
             </div>
-            <section class="mb-9 rounded-2xl bg-teal-900 p-6 text-white">
+            <section class="mb-9 rounded-2xl bg-blue-900 p-6 text-white">
                 <div class="flex items-center justify-between">
                     <h2 class="font-semibold">Sedang diperiksa</h2>
                     <span
@@ -124,7 +126,7 @@ usePoll(10000, {
                 </div>
                 <div
                     v-if="monitor.length"
-                    class="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+                    class="mt-5 grid gap-4 @min-[32rem]/content:grid-cols-2 @min-[57rem]/content:grid-cols-3"
                 >
                     <div
                         v-for="item in monitor"
@@ -136,13 +138,13 @@ usePoll(10000, {
                         }}</strong>
                         <div class="text-sm">
                             Poli {{ item.polyclinic
-                            }}<small class="mt-1 block text-teal-200"
+                            }}<small class="mt-1 block text-blue-200"
                                 >{{ item.doctor }} · {{ item.room }}</small
                             >
                         </div>
                     </div>
                 </div>
-                <p v-else class="mt-4 text-sm text-teal-100/70">
+                <p v-else class="mt-4 text-sm text-blue-100/70">
                     Belum ada pasien yang sedang dipanggil. Nomor akan muncul
                     setelah petugas memanggil pasien.
                 </p>
@@ -160,7 +162,7 @@ usePoll(10000, {
                             day.count
                         }}</span>
                         <div
-                            class="w-full max-w-16 rounded-t-lg bg-teal-600/80"
+                            class="w-full max-w-16 rounded-t-lg bg-blue-600/80"
                             :style="{
                                 height:
                                     Math.max(

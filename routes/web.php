@@ -13,6 +13,7 @@ use App\Http\Middleware\EnsureRole;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [ClinicController::class, 'index'])->name('home');
+Route::inertia('/kebijakan', 'Policies')->name('policies');
 Route::get('/jadwal', [ClinicController::class, 'schedules'])->middleware('auth')->name('schedules');
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'create'])->name('login');

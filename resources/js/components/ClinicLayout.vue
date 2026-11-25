@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { showError, showSuccess } from '@/lib/alerts';
 import ClinicIcon from '@/components/ClinicIcon.vue';
-import { dashboard, home, login, logout, schedules } from '@/routes';
+import { dashboard, home, login, logout, policies, schedules } from '@/routes';
 import { profile, history } from '@/routes/patient';
 import { index as queue } from '@/routes/admin/queue';
 import {
@@ -25,6 +26,43 @@ withDefaults(
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const open = ref(false);
+const compactOverride = ref<boolean | null>(null);
+const roomySidebar = ref(false);
+const compact = computed(() => compactOverride.value ?? !roomySidebar.value);
+const compactPreference = 'hospia-sidebar-compact';
+let sidebarMedia: MediaQueryList | undefined;
+function updateSidebarWidth() {
+    roomySidebar.value = sidebarMedia?.matches ?? false;
+}
+onMounted(() => {
+    const saved = window.localStorage.getItem(compactPreference);
+    compactOverride.value =
+        saved === 'true' ? true : saved === 'false' ? false : null;
+    sidebarMedia = window.matchMedia('(min-width: 80rem)');
+    updateSidebarWidth();
+    sidebarMedia.addEventListener('change', updateSidebarWidth);
+});
+onUnmounted(() =>
+    sidebarMedia?.removeEventListener('change', updateSidebarWidth),
+);
+function toggleSidebar() {
+    const next = !compact.value;
+    compactOverride.value = next === !roomySidebar.value ? null : next;
+    if (compactOverride.value === null) {
+        window.localStorage.removeItem(compactPreference);
+    } else {
+        window.localStorage.setItem(compactPreference, String(next));
+    }
+}
+watch(
+    () => page.props.flash,
+    (flash) => {
+        if (typeof window === 'undefined') return;
+        if (flash?.error) showError(flash.error);
+        else if (flash?.success) showSuccess(flash.success);
+    },
+    { immediate: true },
+);
 const nav = computed(() =>
     user.value?.role === 'admin'
         ? [
@@ -66,7 +104,7 @@ const todayLabel = new Intl.DateTimeFormat('id-ID', {
 
 <template>
     <div
-        class="min-h-screen bg-[#f5f8fa] text-slate-800 dark:bg-slate-950 dark:text-slate-100"
+        class="clinic-shell min-h-screen bg-[#f4f7fd] text-slate-800 dark:bg-slate-950 dark:text-slate-100"
     >
         <Head :title="title" />
         <button
@@ -77,110 +115,149 @@ const todayLabel = new Intl.DateTimeFormat('id-ID', {
         />
         <aside
             v-if="user && !publicPage"
+            id="clinic-sidebar"
             :class="[
-                open ? 'translate-x-0' : '-translate-x-full',
-                'fixed inset-y-0 left-0 z-40 flex w-64 flex-col overflow-y-auto bg-teal-900 p-5 text-white transition-transform lg:translate-x-0 print:hidden',
+                open ? 'visible translate-x-0' : 'invisible -translate-x-full',
+                compact ? 'lg:w-20' : 'lg:w-60',
+                'fixed inset-y-0 left-0 z-40 flex w-60 max-w-[calc(100vw-2rem)] flex-col overflow-y-auto border-r border-slate-200 bg-white px-3 pb-4 text-slate-700 transition-[translate] motion-reduce:transition-none lg:visible lg:translate-x-0 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 print:hidden',
             ]"
+            @keydown.esc="open = false"
         >
-            <Link
-                :href="home()"
-                class="mb-10 flex items-center gap-3 px-2 pt-3"
+            <div
+                class="mb-6 flex h-[72px] shrink-0 items-center gap-2 border-b border-slate-100 px-1 dark:border-slate-800"
             >
-                <span
-                    class="grid size-11 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/20"
-                    ><ClinicIcon name="plus" :size="28"
-                /></span>
-                <span class="text-2xl font-bold tracking-tight"
-                    >Hospia<small
-                        class="mt-0.5 block text-[9px] font-medium tracking-[0.18em] text-teal-200"
-                        >RESERVASI & ANTREAN</small
-                    ></span
+                <Link
+                    :href="home()"
+                    aria-label="Beranda Hospia"
+                    class="flex min-w-0 items-center gap-2.5"
                 >
-            </Link>
+                    <span
+                        class="grid size-10 shrink-0 place-items-center rounded-xl bg-blue-700 text-white"
+                    >
+                        <ClinicIcon name="plus" :size="24" />
+                    </span>
+                    <span
+                        class="text-xl font-extrabold tracking-tight text-slate-950 dark:text-white"
+                        :class="{ 'lg:sr-only': compact }"
+                    >
+                        Hospia<span class="text-blue-600">.</span>
+                    </span>
+                </Link>
+                <button
+                    type="button"
+                    class="ml-auto rounded-lg px-2 text-xl lg:hidden"
+                    aria-label="Tutup navigasi"
+                    @click="open = false"
+                >
+                    ×
+                </button>
+            </div>
             <p
-                class="mb-4 px-3 text-[10px] font-medium tracking-[0.18em] text-teal-200/60"
+                class="mb-3 px-2 text-xs font-semibold text-slate-500"
+                :class="{ 'lg:sr-only': compact }"
             >
-                {{
-                    user.role === 'admin'
-                        ? 'RUANG ADMINISTRASI'
-                        : 'RUANG PASIEN'
-                }}
+                {{ user.role === 'admin' ? 'Administrasi' : 'Akun pasien' }}
             </p>
-            <nav class="flex flex-col gap-2" aria-label="Menu utama">
+            <nav class="flex flex-col gap-1" aria-label="Menu utama">
                 <Link
                     v-for="item in nav"
                     :key="item.title"
                     :href="item.route"
+                    :title="compact ? item.title : undefined"
                     :aria-current="active(item.route.url) ? 'page' : undefined"
                     :class="[
-                        'flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm transition',
+                        'flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors',
+                        compact ? 'lg:justify-center lg:px-0' : '',
                         active(item.route.url)
-                            ? 'bg-white font-semibold text-teal-900 shadow-sm'
-                            : 'text-teal-50/80 hover:bg-white/10 hover:text-white',
+                            ? 'bg-blue-50 font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-200'
+                            : 'hover:bg-slate-100 hover:text-blue-800 dark:hover:bg-slate-800 dark:hover:text-blue-200',
                     ]"
                     @click="open = false"
                 >
-                    <ClinicIcon :name="item.icon" :size="19" />{{ item.title
-                    }}<span
-                        v-if="active(item.route.url)"
-                        class="ml-auto size-1.5 rounded-full bg-teal-600"
-                    />
+                    <ClinicIcon :name="item.icon" :size="19" class="shrink-0" />
+                    <span :class="{ 'lg:sr-only': compact }">{{
+                        item.title
+                    }}</span>
                 </Link>
             </nav>
-            <div class="mt-auto pt-10">
-                <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <ClinicIcon name="heart" class="mb-3 text-teal-200" />
-                    <p class="text-sm font-medium">
-                        Kesehatan, lebih terencana.
-                    </p>
-                    <p class="mt-2 text-xs leading-6 text-teal-100/65">
-                        {{
-                            user.role === 'admin'
-                                ? 'Bantu setiap pasien mendapatkan pengalaman kunjungan yang lebih nyaman.'
-                                : 'Simpan tiket, datang sesuai jadwal, dan pantau antrean Anda.'
-                        }}
-                    </p>
-                </div>
+            <div
+                class="mt-auto border-t border-slate-100 pt-3 dark:border-slate-800"
+            >
                 <button
-                    class="mt-4 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm text-teal-100 transition hover:bg-white/10"
+                    type="button"
+                    class="flex h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                    :class="{ 'lg:justify-center lg:px-0': compact }"
+                    :title="compact ? 'Keluar dari akun' : undefined"
                     @click="router.post(logout().url)"
                 >
-                    <ClinicIcon name="logout" :size="18" />Keluar dari akun
+                    <ClinicIcon name="logout" :size="18" class="shrink-0" />
+                    <span :class="{ 'lg:sr-only': compact }"
+                        >Keluar dari akun</span
+                    >
                 </button>
             </div>
         </aside>
-        <div :class="user && !publicPage ? 'lg:pl-64' : ''">
+        <div
+            :class="
+                user && !publicPage
+                    ? [compact ? 'lg:ml-20' : 'lg:ml-60', 'print:ml-0']
+                    : ''
+            "
+        >
             <header
                 class="sticky top-0 z-20 border-b border-slate-200/80 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 print:hidden"
             >
                 <div
                     :class="[
-                        'mx-auto flex h-20 items-center justify-between gap-4 px-5 sm:px-8',
-                        publicPage || !user ? 'max-w-7xl' : 'max-w-[1600px]',
+                        'clinic-frame mx-auto flex min-h-16 items-center justify-between gap-2 py-2 sm:min-h-[72px] sm:gap-4',
+                        publicPage || !user
+                            ? 'max-w-[88rem]'
+                            : 'max-w-[112rem]',
                     ]"
                 >
                     <Link
                         v-if="publicPage || !user"
                         :href="home()"
-                        class="flex items-center gap-2.5"
+                        class="flex shrink-0 items-center gap-2.5"
                     >
                         <span
-                            class="grid size-10 place-items-center rounded-xl bg-teal-700 text-white"
+                            class="grid size-10 place-items-center rounded-xl bg-blue-700 text-white"
                             ><ClinicIcon name="plus" :size="27"
                         /></span>
                         <span
-                            class="text-2xl font-bold tracking-tight text-teal-950 dark:text-white"
-                            >Hospia<span class="text-teal-500">.</span></span
+                            class="text-2xl font-bold tracking-tight text-blue-950 dark:text-white"
+                            >Hospia<span class="text-blue-500">.</span></span
                         >
                     </Link>
-                    <div v-else class="flex min-w-0 items-center gap-4">
+                    <div
+                        v-else
+                        class="flex min-w-0 items-center gap-2 sm:gap-4"
+                    >
                         <button
                             class="btn-secondary p-2 lg:hidden"
                             :aria-expanded="open"
                             aria-label="Buka navigasi"
+                            aria-controls="clinic-sidebar"
                             @click="open = !open"
                         >
                             <ClinicIcon name="menu" />
+                        </button>
+                        <button
+                            type="button"
+                            class="hidden size-9 items-center justify-center rounded-lg border border-slate-200 text-lg text-slate-600 hover:bg-blue-50 hover:text-blue-800 lg:flex dark:border-slate-700 dark:text-slate-300"
+                            :aria-label="
+                                compact ? 'Perluas sidebar' : 'Ringkas sidebar'
+                            "
+                            :title="
+                                compact ? 'Perluas sidebar' : 'Ringkas sidebar'
+                            "
+                            :aria-expanded="!compact"
+                            aria-controls="clinic-sidebar"
+                            @click="toggleSidebar"
+                        >
+                            <span aria-hidden="true">{{
+                                compact ? '›' : '‹'
+                            }}</span>
                         </button>
                         <div>
                             <p class="text-sm font-semibold">
@@ -199,41 +276,48 @@ const todayLabel = new Intl.DateTimeFormat('id-ID', {
                     </div>
                     <nav
                         v-if="publicPage || !user"
-                        class="hidden items-center gap-8 text-sm text-slate-500 md:flex"
+                        class="hidden items-center gap-4 text-sm text-slate-500 md:flex lg:gap-8"
                         aria-label="Navigasi informasi"
                     >
                         <Link
                             :href="home().url + '#layanan'"
-                            class="hover:text-teal-700"
+                            class="hover:text-blue-700"
                             >Layanan</Link
                         >
                         <Link
                             :href="home().url + '#tentang'"
-                            class="hover:text-teal-700"
+                            class="hover:text-blue-700"
                             >Tentang Hospia</Link
                         >
                         <Link
                             :href="home().url + '#cara-kerja'"
-                            class="hover:text-teal-700"
+                            class="hover:text-blue-700"
                             >Cara reservasi</Link
                         >
                     </nav>
                     <div
                         v-if="user && !publicPage"
-                        class="flex items-center gap-4"
+                        class="flex min-w-0 shrink-0 items-center gap-2 sm:gap-4"
                     >
                         <Link
                             :href="schedules()"
-                            class="hidden items-center gap-2 border-r border-slate-200 pr-5 text-xs text-slate-500 hover:text-teal-700 sm:flex"
+                            class="hidden items-center gap-2 border-r border-slate-200 pr-5 text-xs text-slate-500 hover:text-blue-700 sm:flex"
                             ><ClinicIcon name="calendar" :size="17" />Jadwal
                             dokter</Link
                         >
                         <span
-                            class="grid size-10 place-items-center rounded-full bg-teal-100 text-xs font-bold text-teal-800"
+                            class="grid size-10 shrink-0 place-items-center rounded-full bg-blue-100 text-xs font-bold text-blue-800"
                             >{{ initials }}</span
                         >
-                        <div class="hidden sm:block">
-                            <p class="text-sm font-semibold">{{ user.name }}</p>
+                        <div
+                            class="hidden max-w-40 min-w-0 sm:block xl:max-w-56"
+                        >
+                            <p
+                                class="truncate text-sm font-semibold"
+                                :title="user.name"
+                            >
+                                {{ user.name }}
+                            </p>
                             <p class="mt-0.5 text-[11px] text-slate-400">
                                 {{
                                     user.role === 'admin'
@@ -246,7 +330,7 @@ const todayLabel = new Intl.DateTimeFormat('id-ID', {
                     <Link
                         v-else
                         :href="user ? dashboard() : login()"
-                        class="btn"
+                        class="btn shrink-0 px-3 sm:px-5"
                         >{{ user ? 'Dashboard saya' : 'Masuk / Daftar'
                         }}<ClinicIcon name="arrow" :size="16"
                     /></Link>
@@ -254,46 +338,16 @@ const todayLabel = new Intl.DateTimeFormat('id-ID', {
             </header>
             <main
                 :class="[
-                    'mx-auto min-w-0',
-                    publicPage
-                        ? 'max-w-7xl px-5 py-6 sm:px-8 sm:py-8'
-                        : 'max-w-[1600px] px-5 py-8 sm:px-8',
+                    'clinic-frame @container/content mx-auto min-w-0 py-[clamp(1.25rem,2.5vw,2.75rem)] print:px-0',
+                    publicPage ? 'max-w-[88rem]' : 'max-w-[112rem]',
                 ]"
             >
-                <div
-                    v-if="page.props.flash.success"
-                    role="status"
-                    class="mb-6 rounded-xl border border-teal-200 bg-teal-50 p-4 text-sm text-teal-900"
-                >
-                    {{ page.props.flash.success }}
-                </div>
-                <div
-                    v-if="page.props.flash.error"
-                    role="alert"
-                    class="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800"
-                >
-                    {{ page.props.flash.error }}
-                </div>
-                <div
-                    v-if="Object.keys(page.props.errors).length"
-                    role="alert"
-                    class="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800"
-                >
-                    <p v-for="(error, key) in page.props.errors" :key="key">
-                        {{ error }}
-                    </p>
-                </div>
                 <div v-if="!publicPage" class="mb-7 print:hidden">
-                    <p class="section-kicker mb-2">
-                        {{
-                            eyebrow ||
-                            (user?.role === 'admin'
-                                ? 'HOSPIA / ADMINISTRASI'
-                                : 'HOSPIA / LAYANAN PASIEN')
-                        }}
+                    <p v-if="eyebrow" class="section-kicker mb-2">
+                        {{ eyebrow }}
                     </p>
                     <h1
-                        class="text-2xl font-semibold tracking-tight sm:text-3xl"
+                        class="text-[clamp(1.5rem,1.1rem+1.25cqi,2.25rem)] font-semibold tracking-tight"
                     >
                         {{ title }}
                     </h1>
@@ -308,8 +362,32 @@ const todayLabel = new Intl.DateTimeFormat('id-ID', {
                 <footer
                     class="mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 py-6 text-xs text-slate-400 dark:border-slate-800 print:hidden"
                 >
-                    <span>© {{ new Date().getFullYear() }} Hospia.</span
-                    ><span>Reservasi lebih mudah. Waktu lebih berharga.</span>
+                    <span>© {{ new Date().getFullYear() }} Hospia</span>
+                    <nav
+                        aria-label="Kebijakan layanan"
+                        class="flex flex-wrap gap-x-4 gap-y-2 text-slate-600 dark:text-slate-400"
+                    >
+                        <Link
+                            :href="policies().url + '#privasi'"
+                            class="hover:text-blue-700"
+                            >Privasi</Link
+                        >
+                        <Link
+                            :href="policies().url + '#ketentuan'"
+                            class="hover:text-blue-700"
+                            >Ketentuan layanan</Link
+                        >
+                        <Link
+                            :href="policies().url + '#cookie'"
+                            class="hover:text-blue-700"
+                            >Cookie</Link
+                        >
+                        <Link
+                            :href="policies().url + '#reservasi'"
+                            class="hover:text-blue-700"
+                            >Reservasi & pembatalan</Link
+                        >
+                    </nav>
                 </footer>
             </main>
         </div>

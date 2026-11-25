@@ -12,20 +12,22 @@ const page = usePage();
 </script>
 
 <template>
-    <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+    <div
+        class="grid gap-5 @min-[35rem]/content:grid-cols-2 @min-[55rem]/content:grid-cols-3 @min-[76rem]/content:grid-cols-4"
+    >
         <article
             v-for="schedule in schedules"
             :key="schedule.id"
             :class="[
                 'card flex flex-col gap-5',
                 schedule.available
-                    ? 'border-teal-200 dark:border-teal-800'
+                    ? 'border-blue-200 dark:border-blue-800'
                     : 'bg-slate-50/70 dark:bg-slate-900/70',
             ]"
         >
             <div class="flex items-start justify-between gap-3">
                 <span
-                    class="rounded-lg bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-800 dark:bg-teal-950 dark:text-teal-300"
+                    class="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-800 dark:bg-blue-950 dark:text-blue-300"
                     >Poli {{ schedule.doctor.polyclinic.name }}</span
                 ><span class="text-xs text-slate-400">{{
                     schedule.doctor.polyclinic.room_location
@@ -41,7 +43,7 @@ const page = usePage();
                 />
                 <div
                     v-else
-                    class="grid size-14 shrink-0 place-items-center rounded-2xl bg-slate-100 text-lg font-semibold text-teal-700 dark:bg-slate-800"
+                    class="grid size-14 shrink-0 place-items-center rounded-2xl bg-slate-100 text-lg font-semibold text-blue-700 dark:bg-slate-800"
                 >
                     {{
                         schedule.doctor.name
@@ -79,7 +81,7 @@ const page = usePage();
                         :class="[
                             'inline-flex rounded-full px-2.5 py-1 text-xs font-semibold',
                             schedule.available
-                                ? 'bg-teal-50 text-teal-800 dark:bg-teal-950 dark:text-teal-300'
+                                ? 'bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
                                 : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
                         ]"
                         >{{
@@ -91,7 +93,7 @@ const page = usePage();
                     >
                     <p
                         v-if="schedule.available"
-                        class="mt-2 text-xs text-teal-700 dark:text-teal-400"
+                        class="mt-2 text-xs text-blue-700 dark:text-blue-400"
                     >
                         {{ schedule.remaining }} kuota tersisa
                     </p>

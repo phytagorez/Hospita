@@ -33,13 +33,13 @@ function submit() {
         title="Kasir administrasi"
         description="Catat pembayaran setelah pemeriksaan selesai. Verifikasi pembayaran tunai / QRIS sebelum mencatat pelunasan."
     >
-        <div class="mb-7 grid gap-5 sm:grid-cols-3">
+        <div class="clinic-grid mb-7 gap-5 [--clinic-column-min:12rem]">
             <div class="card">
                 <p class="text-xs text-slate-500">
                     Pendapatan diterima pada tanggal ini
                 </p>
                 <p
-                    class="mt-4 text-2xl font-semibold text-teal-700 dark:text-teal-400"
+                    class="mt-4 text-2xl font-semibold text-blue-700 dark:text-blue-400"
                 >
                     {{ money(revenue) }}
                 </p>
@@ -79,7 +79,9 @@ function submit() {
                     Tutup ✕
                 </button>
             </div>
-            <div class="grid gap-5 md:grid-cols-4">
+            <div
+                class="grid gap-5 @min-[28rem]/content:grid-cols-2 @min-[57rem]/content:grid-cols-4"
+            >
                 <div>
                     <p class="field">Administrasi</p>
                     <p class="mt-3 text-lg font-semibold">
@@ -102,7 +104,7 @@ function submit() {
                 <div>
                     <p class="field">Total dibayar</p>
                     <p
-                        class="mt-3 text-xl font-semibold text-teal-700 dark:text-teal-400"
+                        class="mt-3 text-xl font-semibold text-blue-700 dark:text-blue-400"
                     >
                         {{ money(total) }}
                     </p>
@@ -119,7 +121,7 @@ function submit() {
                     v-model="verified"
                     type="checkbox"
                     required
-                    class="mt-0.5 size-4 shrink-0 accent-teal-700"
+                    class="mt-0.5 size-4 shrink-0 accent-blue-700"
                 />
                 Saya telah memverifikasi penerimaan pembayaran sebesar
                 {{ money(total) }}.
@@ -131,8 +133,13 @@ function submit() {
                 Konfirmasi pelunasan →
             </button>
         </form>
-        <div class="table-wrap">
-            <table class="w-full whitespace-nowrap">
+        <div
+            class="table-wrap"
+            role="region"
+            tabindex="0"
+            aria-label="Transaksi administrasi"
+        >
+            <table class="w-full">
                 <thead>
                     <tr>
                         <th>Pasien / booking</th>
@@ -157,7 +164,7 @@ function submit() {
                         <td>
                             <span
                                 v-if="item.transaction"
-                                class="text-teal-700 dark:text-teal-400"
+                                class="text-blue-700 dark:text-blue-400"
                                 >Lunas ·
                                 {{ money(item.transaction.total_amount) }}</span
                             ><span
@@ -170,7 +177,7 @@ function submit() {
                             <Link
                                 v-if="item.transaction"
                                 :href="receipt(item.id)"
-                                class="text-xs font-semibold text-teal-700 dark:text-teal-400"
+                                class="text-xs font-semibold text-blue-700 dark:text-blue-400"
                                 >Cetak nota ↗</Link
                             ><button
                                 v-else

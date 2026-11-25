@@ -27,19 +27,21 @@ function submit() {
                 : 'Identitas ini digunakan untuk penerbitan nomor rekam medis dan pendaftaran kunjungan.'
         "
     >
-        <div class="grid gap-7 lg:grid-cols-3">
-            <aside class="rounded-2xl bg-teal-900 p-7 text-white">
-                <span class="text-xs tracking-[0.2em] text-teal-200"
+        <div
+            class="grid items-start gap-6 @min-[49rem]/content:grid-cols-[minmax(0,2fr)_minmax(15rem,1fr)]"
+        >
+            <aside class="rounded-2xl bg-blue-900 p-7 text-white">
+                <span class="text-xs tracking-[0.2em] text-blue-200"
                     >KARTU PASIEN DIGITAL</span
                 >
                 <h2 class="mt-9 text-2xl font-semibold">
                     {{ $page.props.auth.user?.name }}
                 </h2>
-                <p class="mt-3 text-xs text-teal-100">
+                <p class="mt-3 text-xs text-blue-100">
                     {{ $page.props.auth.user?.email }}
                 </p>
                 <div class="mt-10 border-t border-white/20 pt-5">
-                    <span class="text-[10px] tracking-widest text-teal-200"
+                    <span class="text-[10px] tracking-widest text-blue-200"
                         >NOMOR REKAM MEDIS</span
                     >
                     <p class="mt-2 font-mono text-sm break-all">
@@ -49,7 +51,7 @@ function submit() {
                         }}
                     </p>
                 </div>
-                <p v-if="profile" class="mt-5 text-xs leading-6 text-teal-100">
+                <p v-if="profile" class="mt-5 text-xs leading-6 text-blue-100">
                     NIK: {{ profile.nik }}<br />Tanggal lahir:
                     {{ profile.birth_date }}<br />Golongan darah:
                     {{
@@ -60,7 +62,7 @@ function submit() {
                 </p>
             </aside>
             <form
-                class="card flex flex-col gap-5 lg:col-span-2"
+                class="card @container/profile flex flex-col gap-5"
                 @submit.prevent="submit"
             >
                 <template v-if="!profile"
@@ -73,7 +75,7 @@ function submit() {
                             required
                             placeholder="16 digit nomor identitas"
                     /></label>
-                    <div class="grid gap-5 sm:grid-cols-2">
+                    <div class="grid gap-5 @min-[26rem]/profile:grid-cols-2">
                         <label class="field"
                             >Tanggal lahir<input
                                 v-model="form.birth_date"

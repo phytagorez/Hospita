@@ -26,24 +26,6 @@ const steps = [
         icon: 'ticket',
     },
 ];
-const benefits = [
-    {
-        icon: 'calendar',
-        title: 'Kunjungan lebih terencana',
-        description:
-            'Pilih waktu pemeriksaan yang sesuai dengan aktivitas Anda.',
-    },
-    {
-        icon: 'ticket',
-        title: 'Tiket dalam satu tempat',
-        description: 'Detail janji dan tiket kunjungan tersimpan di akun Anda.',
-    },
-    {
-        icon: 'clock',
-        title: 'Antrean lebih mudah dipantau',
-        description: 'Ikuti perkembangan pelayanan setelah melakukan check-in.',
-    },
-];
 const faqs = [
     {
         question: 'Apakah harus punya akun untuk melihat jadwal?',
@@ -65,374 +47,220 @@ const faqs = [
 </script>
 
 <template>
-    <ClinicLayout
-        title="Reservasi lebih mudah, kunjungan lebih nyaman"
-        public-page
-    >
+    <ClinicLayout title="Jadwal dokter dan reservasi online" public-page>
         <section
-            id="layanan"
-            aria-labelledby="layanan-title"
-            class="mb-6 scroll-mt-24 rounded-2xl border border-slate-200/80 bg-white p-4 sm:px-6 dark:border-slate-800 dark:bg-slate-900"
-        >
-            <div
-                class="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-7"
-            >
-                <div class="shrink-0">
-                    <p class="section-kicker">LAYANAN KAMI</p>
-                    <h2 id="layanan-title" class="mt-1 text-sm font-semibold">
-                        Poliklinik untuk Anda
-                    </h2>
-                </div>
-                <div class="flex flex-1 flex-wrap gap-2">
-                    <div
-                        v-for="poli in polyclinics"
-                        :key="poli.id"
-                        class="flex items-center gap-2.5 rounded-xl bg-slate-50 px-3.5 py-2.5 dark:bg-slate-800"
-                    >
-                        <ClinicIcon
-                            name="plus"
-                            :size="17"
-                            class="text-teal-600"
-                        /><span class="text-xs font-medium"
-                            >Poli {{ poli.name }}</span
-                        ><span class="sr-only">, {{ poli.room_location }}</span>
-                    </div>
-                    <p
-                        v-if="!polyclinics.length"
-                        class="text-sm text-slate-500"
-                    >
-                        Informasi layanan sedang disiapkan.
-                    </p>
-                </div>
-                <span
-                    class="flex shrink-0 items-center gap-2 text-[11px] text-slate-400"
-                    ><span class="size-1.5 rounded-full bg-teal-500" />Layanan
-                    aktif</span
-                >
-            </div>
-        </section>
-
-        <section
-            class="grid gap-5 lg:grid-cols-12"
+            class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
             aria-labelledby="hero-title"
         >
             <div
-                class="relative overflow-hidden rounded-[28px] bg-teal-900 lg:col-span-8"
+                class="grid @min-[48rem]/content:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]"
             >
                 <div
-                    class="pointer-events-none absolute -top-20 -right-24 size-96 rounded-full border-[60px] border-white/5"
-                />
-                <div
-                    class="relative z-10 flex min-h-[450px] flex-col items-start justify-center px-7 py-10 sm:px-11 sm:py-14 lg:min-h-[480px]"
+                    class="flex flex-col items-start justify-center px-[clamp(1.25rem,4cqi,4rem)] py-[clamp(2rem,5cqi,5rem)] @min-[48rem]/content:min-h-[clamp(23rem,39cqi,34rem)]"
                 >
-                    <span
-                        class="mb-6 inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-white/5 px-3 py-2 text-[10px] font-medium tracking-[0.12em] text-teal-100"
-                        ><span class="size-1.5 rounded-full bg-teal-300" />LEBIH
-                        DEKAT DENGAN LAYANAN KESEHATAN</span
-                    >
                     <h1
                         id="hero-title"
-                        class="max-w-xl text-[40px] leading-[1.12] font-semibold tracking-tight text-white sm:text-5xl xl:text-[60px]"
+                        class="max-w-xl text-[clamp(2.125rem,1.1rem+3.8cqi,4.5rem)] leading-[1.08] font-extrabold tracking-[-0.055em] text-slate-950 dark:text-white"
                     >
-                        Janji lebih mudah.<br />Kunjungan lebih<br /><span
-                            class="text-teal-200"
-                            >nyaman.</span
+                        Atur kunjungan dokter
+                        <span class="text-blue-700 dark:text-blue-300"
+                            >dari rumah.</span
                         >
                     </h1>
-                    <p class="mt-6 max-w-md text-sm leading-7 text-teal-50/75">
-                        Mulai langkah sehat Anda bersama Hospia. Atur janji
-                        dokter, simpan tiket, dan pantau antrean melalui satu
-                        aplikasi yang mudah digunakan.
+                    <p
+                        class="mt-5 max-w-md text-base leading-7 text-slate-600 dark:text-slate-300"
+                    >
+                        Pilih poliklinik dan jam praktik, simpan tiket
+                        kunjungan, lalu pantau antrean di akun Hospia.
                     </p>
-                    <div class="mt-8 flex flex-wrap items-center gap-5">
-                        <Link
-                            :href="schedules()"
-                            class="inline-flex items-center gap-4 rounded-xl bg-white px-5 py-3.5 text-sm font-semibold text-teal-900 transition hover:bg-teal-50"
-                            >{{
-                                $page.props.auth.user
-                                    ? 'Temukan jadwal dokter'
-                                    : 'Mulai reservasi'
-                            }}<ClinicIcon name="arrow" :size="18" /></Link
-                        ><a
-                            href="#cara-kerja"
-                            class="text-sm text-white underline decoration-white/30 underline-offset-4 hover:decoration-white"
-                            >Cara menggunakan Hospia</a
+                    <div class="mt-7 flex flex-wrap items-center gap-3">
+                        <Link :href="schedules()" class="btn rounded-full">
+                            <ClinicIcon name="calendar" :size="18" /> Cari
+                            jadwal dokter
+                        </Link>
+                        <a href="#cara-kerja" class="btn-secondary rounded-full"
+                            >Cara reservasi</a
                         >
                     </div>
-                    <div
-                        class="mt-8 flex items-center gap-2 text-xs text-teal-100/70"
+                    <p
+                        v-if="!$page.props.auth.user"
+                        class="mt-4 text-xs leading-5 text-slate-500 dark:text-slate-400"
                     >
-                        <ClinicIcon name="shield" :size="16" />{{
-                            $page.props.auth.user
-                                ? 'Kelola kunjungan melalui akun Anda.'
-                                : 'Masuk terlebih dahulu untuk melihat jadwal dan kuota.'
-                        }}
-                    </div>
+                        Masuk untuk melihat jam praktik dan kuota terbaru.
+                    </p>
                 </div>
-            </div>
-            <div
-                class="relative min-h-96 overflow-hidden rounded-[28px] bg-stone-200 lg:col-span-4"
-            >
-                <img
-                    src="/images/doctor-portrait.jpg"
-                    alt="Ilustrasi tenaga medis dengan jas putih dan stetoskop"
-                    width="1000"
-                    height="1498"
-                    fetchpriority="high"
-                    class="absolute inset-0 h-full w-full object-cover object-[center_25%]"
-                />
                 <div
-                    class="absolute inset-0 bg-linear-to-t from-teal-950/85 via-transparent to-transparent"
-                />
-                <div
-                    class="absolute inset-x-5 bottom-6 rounded-2xl border border-white/25 bg-white/95 p-4 shadow-lg dark:bg-slate-900/95"
+                    class="relative isolate min-h-[clamp(16rem,42cqi,24rem)] overflow-hidden bg-blue-700"
                 >
-                    <div class="flex items-center gap-3">
-                        <span
-                            class="grid size-10 place-items-center rounded-xl bg-teal-50 text-teal-700"
-                            ><ClinicIcon name="heart"
-                        /></span>
-                        <div>
-                            <p class="text-sm font-semibold">
-                                Ruang untuk kesehatan Anda
-                            </p>
-                            <p class="mt-1 text-xs text-slate-500">
-                                Persiapkan kunjungan dengan tenang.
-                            </p>
-                        </div>
-                    </div>
+                    <div
+                        aria-hidden="true"
+                        class="absolute top-6 right-6 hidden size-20 rounded-2xl border border-white/35 @min-[48rem]/content:block"
+                    ></div>
+                    <img
+                        src="/images/doctor-portrait.jpg"
+                        alt="Tenaga medis dengan stetoskop"
+                        width="1000"
+                        height="1498"
+                        fetchpriority="high"
+                        class="absolute inset-x-6 bottom-0 h-full w-[calc(100%-3rem)] rounded-t-3xl object-cover object-[center_22%] sm:inset-x-9 sm:w-[calc(100%-4.5rem)] @min-[48rem]/content:inset-x-auto @min-[48rem]/content:right-[10%] @min-[48rem]/content:h-[92%] @min-[48rem]/content:w-[80%]"
+                    />
                 </div>
-                <span
-                    class="absolute top-4 right-4 rounded-full bg-white/90 px-3 py-1.5 text-[10px] text-slate-500"
-                    >Foto ilustrasi</span
-                >
             </div>
         </section>
 
         <section
-            aria-label="Manfaat Hospia"
-            class="grid gap-6 border-b border-slate-200 py-9 md:grid-cols-3 dark:border-slate-800"
+            id="layanan"
+            aria-labelledby="layanan-title"
+            class="scroll-mt-24 py-11 sm:py-14"
         >
-            <article
-                v-for="benefit in benefits"
-                :key="benefit.title"
-                class="flex items-start gap-4"
-            >
-                <span
-                    class="grid size-11 shrink-0 place-items-center rounded-2xl border border-teal-100 bg-teal-50 text-teal-700 dark:border-teal-900 dark:bg-teal-950 dark:text-teal-300"
-                    ><ClinicIcon :name="benefit.icon"
-                /></span>
+            <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
                 <div>
-                    <h2 class="text-sm font-semibold">{{ benefit.title }}</h2>
-                    <p
-                        class="mt-2 max-w-xs text-xs leading-6 text-slate-500 dark:text-slate-400"
+                    <h2
+                        id="layanan-title"
+                        class="text-3xl font-extrabold tracking-tight"
                     >
-                        {{ benefit.description }}
+                        Layanan poliklinik
+                    </h2>
+                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                        Pilih layanan untuk melihat jadwal dokter yang tersedia.
                     </p>
                 </div>
-            </article>
+                <Link
+                    :href="schedules()"
+                    class="inline-flex items-center gap-2 text-sm font-bold text-blue-700 dark:text-blue-300"
+                >
+                    Lihat semua jadwal <ClinicIcon name="arrow" :size="16" />
+                </Link>
+            </div>
+            <div
+                v-if="polyclinics.length"
+                class="grid gap-3 @min-[27rem]/content:grid-cols-2 @min-[64rem]/content:grid-cols-4"
+            >
+                <Link
+                    v-for="poli in polyclinics"
+                    :key="poli.id"
+                    :href="schedules({ query: { polyclinic: poli.id } })"
+                    class="card flex items-center gap-3 p-4 transition-colors hover:border-blue-300 hover:bg-blue-50 dark:hover:border-blue-700 dark:hover:bg-blue-950"
+                >
+                    <span
+                        class="grid size-11 shrink-0 place-items-center rounded-xl bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200"
+                    >
+                        <ClinicIcon name="plus" :size="20" />
+                    </span>
+                    <span class="min-w-0 flex-1">
+                        <span class="block text-sm font-bold"
+                            >Poli {{ poli.name }}</span
+                        >
+                        <span
+                            class="mt-1 block text-xs text-slate-500 dark:text-slate-400"
+                            >{{ poli.room_location }}</span
+                        >
+                    </span>
+                    <ClinicIcon
+                        name="arrow"
+                        :size="16"
+                        class="shrink-0 text-blue-700 dark:text-blue-300"
+                    />
+                </Link>
+            </div>
+            <p v-else class="card text-sm text-slate-500">
+                Informasi layanan sedang disiapkan.
+            </p>
         </section>
 
         <section
             id="tentang"
-            class="grid scroll-mt-28 items-center gap-10 py-14 lg:grid-cols-2 lg:gap-16"
             aria-labelledby="tentang-title"
+            class="grid scroll-mt-24 overflow-hidden rounded-[1.75rem] bg-blue-950 text-white @min-[45rem]/content:grid-cols-2"
         >
-            <div class="relative pb-6 pl-0 sm:pl-5">
-                <img
-                    src="/images/consultation.jpg"
-                    alt="Ilustrasi dokter memeriksa pasien di ruang konsultasi"
-                    width="1200"
-                    height="800"
-                    loading="lazy"
-                    class="aspect-[5/4] w-full rounded-[28px] object-cover"
-                />
-                <div
-                    class="absolute right-4 bottom-0 flex max-w-72 items-center gap-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-lg sm:-right-3 dark:border-slate-800 dark:bg-slate-900"
-                >
-                    <span
-                        class="grid size-12 shrink-0 place-items-center rounded-full bg-teal-50 text-teal-700"
-                        ><ClinicIcon name="check" :size="24"
-                    /></span>
-                    <div>
-                        <p class="text-sm font-semibold">
-                            Satu janji. Satu tiket.
-                        </p>
-                        <p class="mt-1 text-xs leading-5 text-slate-500">
-                            Detail kunjungan tersimpan rapi di akun Anda.
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <div>
-                <p class="section-kicker">MENGENAL HOSPIA</p>
+            <img
+                src="/images/consultation.jpg"
+                alt="Dokter memeriksa pasien di ruang konsultasi"
+                width="1200"
+                height="800"
+                loading="lazy"
+                class="h-full max-h-80 min-h-52 w-full object-cover"
+            />
+            <div class="flex flex-col justify-center px-6 py-8 sm:px-10">
                 <h2
                     id="tentang-title"
-                    class="mt-4 max-w-lg text-3xl leading-tight font-semibold tracking-tight sm:text-4xl"
+                    class="text-3xl font-extrabold tracking-tight"
                 >
-                    Lebih sedikit urusan administrasi.<br /><span
-                        class="text-teal-700 dark:text-teal-300"
-                        >Lebih fokus pada kesehatan.</span
-                    >
+                    Janji dan antrean dalam satu akun
                 </h2>
-                <p
-                    class="mt-5 text-sm leading-7 text-slate-500 dark:text-slate-400"
-                >
-                    Hospia adalah sistem ticketing untuk reservasi dan antrean
-                    poliklinik. Dari memilih jadwal hingga memantau pelayanan,
-                    semua informasi kunjungan Anda terhubung dalam satu tempat.
+                <p class="mt-4 max-w-md text-sm leading-7 text-blue-100">
+                    Buka riwayat untuk melihat tiket kunjungan. Setelah check-in
+                    di meja pendaftaran, pantau perkembangan antrean dari
+                    dashboard pasien.
                 </p>
-                <ul class="mt-6 grid gap-4 text-sm">
-                    <li
-                        v-for="text in [
-                            'Lihat jadwal dan kuota sebelum membuat janji',
-                            'Akses kembali tiket serta riwayat kunjungan',
-                            'Pantau antrean setelah check-in di klinik',
-                        ]"
-                        :key="text"
-                        class="flex items-center gap-3"
-                    >
-                        <span
-                            class="grid size-6 place-items-center rounded-full bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300"
-                            ><ClinicIcon name="check" :size="14" /></span
-                        >{{ text }}
-                    </li>
-                </ul>
-                <a
-                    href="#cara-kerja"
-                    class="mt-7 inline-flex items-center gap-3 text-sm font-semibold text-teal-700 dark:text-teal-300"
-                    >Kenali alur reservasi<ClinicIcon name="arrow" :size="17"
-                /></a>
             </div>
         </section>
 
         <section
             id="cara-kerja"
-            aria-labelledby="cara-title"
-            class="scroll-mt-28 rounded-[28px] bg-white px-6 py-10 sm:px-9 dark:bg-slate-900"
+            aria-labelledby="cara-kerja-title"
+            class="scroll-mt-24 py-11 sm:py-14"
         >
-            <div class="flex flex-wrap items-end justify-between gap-4">
-                <div>
-                    <p class="section-kicker">MUDAH DARI AWAL</p>
-                    <h2
-                        id="cara-title"
-                        class="mt-3 text-3xl font-semibold tracking-tight"
-                    >
-                        Tiga langkah menuju kunjungan Anda.
-                    </h2>
-                </div>
-                <p class="max-w-xs text-sm leading-6 text-slate-500">
-                    Rencanakan dari mana saja, datang dengan persiapan yang
-                    lebih baik.
-                </p>
-            </div>
-            <div class="mt-9 grid gap-7 md:grid-cols-3">
-                <article
-                    v-for="(step, i) in steps"
-                    :key="step.title"
-                    class="rounded-2xl border border-slate-100 bg-slate-50/70 p-6 dark:border-slate-800 dark:bg-slate-950"
-                >
-                    <div class="flex items-center justify-between">
-                        <span
-                            class="grid size-12 place-items-center rounded-xl bg-white text-teal-700 shadow-xs dark:bg-slate-800 dark:text-teal-300"
-                            ><ClinicIcon :name="step.icon" :size="23" /></span
-                        ><span
-                            class="text-3xl font-medium text-slate-200 dark:text-slate-700"
-                            >0{{ i + 1 }}</span
-                        >
-                    </div>
-                    <h3 class="mt-6 font-semibold">{{ step.title }}</h3>
+            <h2
+                id="cara-kerja-title"
+                class="mb-5 text-3xl font-extrabold tracking-tight"
+            >
+                Cara reservasi
+            </h2>
+            <ol class="grid gap-3 @min-[47rem]/content:grid-cols-3">
+                <li v-for="step in steps" :key="step.title" class="card">
+                    <ClinicIcon
+                        :name="step.icon"
+                        :size="23"
+                        class="text-blue-700 dark:text-blue-300"
+                    />
+                    <h3 class="mt-3 text-sm font-bold">{{ step.title }}</h3>
                     <p
-                        class="mt-3 text-sm leading-7 text-slate-500 dark:text-slate-400"
+                        class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300"
                     >
                         {{ step.description }}
                     </p>
-                </article>
-            </div>
+                </li>
+            </ol>
         </section>
 
         <section
-            class="grid gap-8 py-14 lg:grid-cols-5"
+            id="faq"
             aria-labelledby="faq-title"
+            class="grid scroll-mt-24 gap-5 rounded-[1.75rem] bg-blue-50 px-6 py-8 sm:px-8 @min-[43rem]/content:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] dark:bg-slate-900"
         >
-            <div class="lg:col-span-2">
-                <p class="section-kicker">SEBELUM MEMULAI</p>
-                <h2
-                    id="faq-title"
-                    class="mt-3 text-3xl font-semibold tracking-tight"
-                >
-                    Ada yang ingin<br />Anda ketahui?
-                </h2>
-                <p class="mt-4 max-w-xs text-sm leading-7 text-slate-500">
-                    Temukan informasi singkat tentang akun, reservasi, dan tiket
-                    kunjungan.
-                </p>
-            </div>
-            <div class="space-y-3 lg:col-span-3">
+            <h2 id="faq-title" class="text-3xl font-extrabold tracking-tight">
+                Pertanyaan umum
+            </h2>
+            <div class="flex flex-col gap-2">
                 <details
                     v-for="faq in faqs"
                     :key="faq.question"
-                    class="group rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+                    name="faq-hospia"
+                    class="group rounded-xl border border-blue-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-950"
                 >
                     <summary
-                        class="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-semibold [&::-webkit-details-marker]:hidden"
+                        class="flex cursor-pointer list-none items-center justify-between gap-4 rounded-sm text-sm font-bold [&::-webkit-details-marker]:hidden"
                     >
-                        {{ faq.question
-                        }}<ClinicIcon
-                            name="plus"
-                            :size="17"
-                            class="text-teal-600 transition group-open:rotate-45"
-                        />
+                        {{ faq.question }}
+                        <span
+                            aria-hidden="true"
+                            class="shrink-0 text-xl leading-none text-blue-700 group-open:hidden dark:text-blue-300"
+                            >+</span
+                        >
+                        <span
+                            aria-hidden="true"
+                            class="hidden shrink-0 text-xl leading-none text-blue-700 group-open:block dark:text-blue-300"
+                            >−</span
+                        >
                     </summary>
                     <p
-                        class="mt-4 text-sm leading-7 text-slate-500 dark:text-slate-400"
+                        class="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300"
                     >
                         {{ faq.answer }}
                     </p>
                 </details>
             </div>
         </section>
-
-        <section
-            class="flex flex-col items-start justify-between gap-6 rounded-[28px] bg-teal-900 p-8 text-white sm:flex-row sm:items-center sm:p-10"
-        >
-            <div>
-                <p class="text-xs text-teal-200">
-                    LANGKAH KECIL UNTUK KESEHATAN ANDA
-                </p>
-                <h2
-                    class="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl"
-                >
-                    Kunjungan berikutnya, lebih terencana.
-                </h2>
-                <p class="mt-3 text-sm text-teal-100/70">
-                    Mulai dengan akun Anda, lalu temukan jadwal yang sesuai.
-                </p>
-            </div>
-            <Link
-                :href="schedules()"
-                class="inline-flex shrink-0 items-center gap-4 rounded-xl bg-white px-5 py-3.5 text-sm font-semibold text-teal-900 transition hover:bg-teal-50"
-                >Mulai sekarang<ClinicIcon name="arrow" :size="18"
-            /></Link>
-        </section>
-        <p class="mt-5 text-center text-[10px] text-slate-400">
-            Foto ilustrasi oleh
-            <a
-                href="https://www.pexels.com/photo/physician-in-white-coat-wearing-a-stethoscope-5998482/"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="underline underline-offset-2"
-                >Pavel Danilyuk</a
-            >
-            dan
-            <a
-                href="https://www.pexels.com/photo/photo-of-doctor-checking-on-her-patient-5327584/"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="underline underline-offset-2"
-                >Thirdman</a
-            >
-            di Pexels.
-        </p>
     </ClinicLayout>
 </template>

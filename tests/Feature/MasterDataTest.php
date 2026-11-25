@@ -90,3 +90,14 @@ test('reserved schedules cannot change times or reduce quota below existing book
 test('unknown master entity is not routable', function () {
     $this->actingAs(User::factory()->admin()->create())->post('/admin/master/users', [])->assertNotFound();
 });
+
+test('admins cannot pick a past closure date and can edit a session with a previous closure', function () {
+    $this->travelTo(Carbon::parse('2026-11-09 07:00:00'));
+    $schedule = DoctorSchedule::factory()->create(['closed_date' => '2026-11-02']);
+    $data = ['doctor_id' => $schedule->doctor_id, 'day_of_week' => 1, 'start_time' => '08:00',
+        'end_time' => '12:00', 'max_quota' => 20, 'is_active' => true, 'closed_date' => '2026-11-02'];
+    $this->actingAs(User::factory()->admin()->create());
+
+    $this->post(route('admin.master.store', 'schedules'), $data)->assertSessionHasErrors(['closed_date']);
+    $this->put(route('admin.master.update', ['schedules', $schedule->id]), $data)->assertSessionHasNoErrors();
+});

@@ -11,6 +11,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Fluent;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -25,7 +26,7 @@ class MasterDataController extends Controller
 
     public function schedules(): Response
     {
-        return Inertia::render('ScheduleManagement', ['schedules' => DoctorSchedule::with('doctor.polyclinic')->orderBy('day_of_week')->orderBy('start_time')->get(), 'doctors' => Doctor::with('polyclinic')->orderBy('name')->get()]);
+        return Inertia::render('ScheduleManagement', ['schedules' => DoctorSchedule::with('doctor.polyclinic')->orderBy('day_of_week')->orderBy('start_time')->get(), 'doctors' => Doctor::with('polyclinic')->orderBy('name')->get(), 'today' => today()->toDateString()]);
     }
 
     public function store(Request $request, string $entity): RedirectResponse
@@ -110,7 +111,14 @@ class MasterDataController extends Controller
             'schedules' => ['doctor_id' => ['required', 'integer', 'exists:doctors,id'], 'day_of_week' => ['required', 'integer', 'between:0,6'],
                 'start_time' => ['required', 'date_format:H:i'], 'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
                 'max_quota' => ['required', 'integer', 'between:1,200'], 'is_active' => ['required', 'boolean'],
-                'closed_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:today']],
+                'closed_date' => [
+                    'nullable', 'date_format:Y-m-d',
+                    Rule::when(
+                        fn (Fluent $input): bool => ! ($model instanceof DoctorSchedule
+                            && $model->closed_date?->toDateString() === $input->get('closed_date')),
+                        'after_or_equal:today',
+                    ),
+                ]],
             default => abort(404),
         };
     }

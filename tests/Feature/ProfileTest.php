@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\DoctorSchedule;
 use App\Models\PatientProfile;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -37,3 +38,19 @@ test('patient search finds RM NIK and name with history', function (string $fiel
     $this->actingAs(User::factory()->admin()->create())->get(route('admin.patients.index', ['search' => $search]))->assertOk()->assertInertia(fn (Assert $page) => $page->has('patients.data', 1)->where('patients.data.0.id', $patient->id));
     $this->get(route('admin.patients.show', $patient))->assertOk();
 })->with(['name', 'nik', 'no_rm']);
+
+test('onboarding returns the patient to the date and session they chose', function () {
+    $user = User::factory()->create();
+    $date = today()->addDays(2);
+    $schedule = DoctorSchedule::factory()->create(['day_of_week' => $date->dayOfWeek]);
+    $booking = route('reservations.create', ['date' => $date->toDateString(), 'schedule' => $schedule->id]);
+    $this->actingAs($user)->get($booking)->assertRedirect(route('patient.profile'));
+
+    $this->put(route('patient.update'), [
+        'nik' => '1234567890123456', 'birth_date' => '2000-01-01', 'gender' => 'female',
+        'phone' => '081234567890', 'address' => 'Jalan Mawar No. 1',
+    ])->assertRedirect($booking);
+
+    $this->actingAs($user->fresh())->get($booking)->assertOk()->assertInertia(fn (Assert $page) => $page->component('Booking')
+        ->where('date', $date->toDateString())->where('scheduleId', $schedule->id));
+});

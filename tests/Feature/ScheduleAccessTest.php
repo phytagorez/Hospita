@@ -104,3 +104,27 @@ test('walk in registration cannot bypass a patients existing active appointment'
     ])->assertSessionHasErrors(['schedule_id']);
     $this->assertDatabaseCount('reservations', 1);
 });
+
+test('booking keeps the chosen date and only offers sessions that still have seats', function () {
+    $date = '2026-11-10';
+    $morning = DoctorSchedule::factory()->create(['day_of_week' => 2]);
+    $afternoon = DoctorSchedule::factory()->for($morning->doctor)->create([
+        'day_of_week' => 2, 'start_time' => '16:00', 'end_time' => '20:00',
+    ]);
+    $full = DoctorSchedule::factory()->create(['day_of_week' => 2, 'max_quota' => 1]);
+    Reservation::factory()->for($full, 'schedule')->create(['reservation_date' => $date]);
+    DoctorSchedule::factory()->create(['day_of_week' => 2, 'closed_date' => $date]);
+    $patient = PatientProfile::factory()->create();
+
+    $this->actingAs($patient->user)->get(route('reservations.create', ['date' => $date, 'schedule' => $afternoon->id]))
+        ->assertOk()->assertInertia(fn (Assert $page) => $page->component('Booking')
+        ->where('date', $date)->where('scheduleId', $afternoon->id)->has('schedules', 2)
+        ->where('schedules.0.id', $morning->id)->where('schedules.1.id', $afternoon->id));
+
+    $this->get(route('reservations.create', ['date' => $date, 'schedule' => $full->id]))
+        ->assertOk()->assertInertia(fn (Assert $page) => $page->where('date', $date)->where('scheduleId', 0));
+});
+
+test('visitors can open the service policies without an account', function () {
+    $this->get(route('policies'))->assertOk()->assertInertia(fn (Assert $page) => $page->component('Policies'));
+});

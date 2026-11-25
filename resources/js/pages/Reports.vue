@@ -42,18 +42,18 @@ const filters = reactive({ ...props.filters });
                 router.get(reports().url, filters, { preserveState: true })
             "
         >
-            <label class="field min-w-36 flex-1"
+            <label class="field flex-[1_1_10rem]"
                 >Dari tanggal<input
                     v-model="filters.from"
                     type="date"
                     required /></label
-            ><label class="field min-w-36 flex-1"
+            ><label class="field flex-[1_1_10rem]"
                 >Sampai tanggal<input
                     v-model="filters.to"
                     type="date"
                     :min="filters.from"
                     required /></label
-            ><label class="field min-w-36 flex-1"
+            ><label class="field flex-[1_1_10rem]"
                 >Poliklinik<select v-model="filters.polyclinic">
                     <option value="">Semua poli</option>
                     <option
@@ -95,7 +95,7 @@ const filters = reactive({ ...props.filters });
         </div>
         <div
             v-if="summary.length"
-            class="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+            class="mb-8 grid gap-4 @min-[26rem]/content:grid-cols-2 @min-[53rem]/content:grid-cols-4"
         >
             <article v-for="item in summary" :key="item.name" class="card">
                 <p class="section-kicker">POLI {{ item.name.toUpperCase() }}</p>
@@ -112,8 +112,13 @@ const filters = reactive({ ...props.filters });
         </div>
         <section v-if="doctorSummary.length" class="mb-8">
             <h2 class="mb-4 text-lg font-semibold">Rekapitulasi per dokter</h2>
-            <div class="table-wrap">
-                <table class="w-full whitespace-nowrap">
+            <div
+                class="table-wrap"
+                role="region"
+                tabindex="0"
+                aria-label="Tabel laporan"
+            >
+                <table class="w-full">
                     <thead>
                         <tr>
                             <th>Dokter / poli</th>

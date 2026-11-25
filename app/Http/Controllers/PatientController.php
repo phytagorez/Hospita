@@ -31,7 +31,12 @@ class PatientController extends Controller
             }
         });
 
-        return redirect()->route('dashboard')->with('success', 'Profil pasien berhasil disimpan.');
+        $booking = $request->session()->pull('pending_booking', []);
+        $destination = $booking === []
+            ? redirect()->route('dashboard')
+            : redirect()->route('reservations.create', $booking);
+
+        return $destination->with('success', 'Profil pasien berhasil disimpan.');
     }
 
     public function index(Request $request): Response

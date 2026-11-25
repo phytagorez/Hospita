@@ -7,7 +7,6 @@ use App\Models\Polyclinic;
 use App\Models\Reservation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -80,24 +79,11 @@ class ClinicController extends Controller
             'polyclinic' => ['nullable', 'integer', 'exists:polyclinics,id'],
         ]);
         $date = $data['date'] ?? today()->toDateString();
-        $schedules = DoctorSchedule::with('doctor.polyclinic')->where('day_of_week', Carbon::parse($date)->dayOfWeek)->where('is_active', true)
-            ->whereHas('doctor', fn ($query) => $query->where('is_active', true)->whereHas('polyclinic', fn ($poli) => $poli->where('is_active', true)))
-            ->when($data['polyclinic'] ?? null, fn ($query, $id) => $query->whereHas('doctor', fn ($doctor) => $doctor->where('polyclinic_id', $id)))
-            ->withCount(['reservations as booked_count' => fn ($query) => $query->whereDate('reservation_date', $date)->where('status', '!=', 'cancelled')])
-            ->orderBy('start_time')->get()->map(function (DoctorSchedule $schedule) use ($date) {
-                $remaining = max(0, $schedule->max_quota - $schedule->booked_count);
-                $schedule->setAttribute('remaining', $remaining);
-                $reason = match (true) {
-                    $schedule->closed_date?->toDateString() === $date => 'Jadwal ditutup',
-                    Carbon::parse($date.' '.$schedule->start_time)->lte(now()) => 'Sesi sudah dimulai',
-                    $remaining === 0 => 'Kuota penuh',
-                    default => null,
-                };
-                $schedule->setAttribute('available', $reason === null);
-                $schedule->setAttribute('unavailable_reason', $reason);
-
-                return $schedule;
-            })->sortBy([['available', 'desc'], ['start_time', 'asc'], ['id', 'asc']])->values();
+        $schedules = DoctorSchedule::patientSessions($date)
+            ->when($data['polyclinic'] ?? null, fn ($query, $id) => $query
+                ->whereHas('doctor', fn ($doctor) => $doctor->where('polyclinic_id', $id)))
+            ->get()->map(fn (DoctorSchedule $schedule) => $schedule->availabilityOn($date))
+            ->sortByDesc('available')->values();
 
         return ['schedules' => $schedules, 'filters' => ['date' => $date, 'polyclinic' => $data['polyclinic'] ?? ''], 'today' => today()->toDateString(), 'maxDate' => today()->addDays(30)->toDateString()];
     }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link, useForm } from '@inertiajs/vue3';
+import { confirmAction } from '@/lib/alerts';
 import ClinicLayout from '@/components/ClinicLayout.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import { destroy, qr, receipt } from '@/routes/reservations';
@@ -10,10 +11,12 @@ defineProps<{
     canCancel: boolean;
 }>();
 const form = useForm({});
-function cancel(id: number) {
+async function cancel(id: number) {
     if (
-        window.confirm(
-            'Batalkan reservasi ini? Kuota akan tersedia kembali bagi pasien lain.',
+        await confirmAction(
+            'Batalkan reservasi?',
+            'Kuota sesi akan tersedia bagi pasien lain.',
+            'Batalkan reservasi',
         )
     ) {
         form.delete(destroy(id).url);
@@ -32,26 +35,28 @@ function print() {
             class="mx-auto max-w-3xl overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
         >
             <header
-                class="flex flex-wrap items-start justify-between gap-4 bg-teal-900 p-7 text-white"
+                class="flex flex-wrap items-start justify-between gap-4 bg-blue-900 p-7 text-white"
             >
                 <div>
-                    <span class="text-[10px] tracking-[0.2em] text-teal-200"
+                    <span class="text-[10px] tracking-[0.2em] text-blue-200"
                         >HOSPIA / TIKET KUNJUNGAN</span
                     >
                     <h2 class="mt-3 text-xl font-semibold">
                         {{ reservation.patient.user.name }}
                     </h2>
-                    <p class="mt-2 text-xs break-all text-teal-100">
+                    <p class="mt-2 text-xs break-all text-blue-100">
                         {{ reservation.patient.no_rm }}
                     </p>
                 </div>
                 <StatusBadge :status="reservation.status" />
             </header>
-            <div class="grid gap-8 p-7 sm:grid-cols-2">
+            <div
+                class="grid gap-6 p-[clamp(1rem,3cqi,1.75rem)] @min-[36rem]/content:grid-cols-2"
+            >
                 <div>
                     <p class="section-kicker">NOMOR ANTREAN</p>
                     <p
-                        class="mt-2 font-mono text-7xl font-semibold text-teal-800 dark:text-teal-300"
+                        class="mt-2 font-mono text-7xl font-semibold text-blue-800 dark:text-blue-300"
                     >
                         {{ queueLabel(reservation.queue_number) }}
                     </p>

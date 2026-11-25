@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
+import { confirmAction } from '@/lib/alerts';
 import ClinicLayout from '@/components/ClinicLayout.vue';
 import { store, update, destroy } from '@/routes/admin/master';
 import { money, type Polyclinic, type Doctor } from '@/types/clinic';
@@ -71,10 +72,12 @@ function saveDoctor() {
         );
     else doctor.post(store('doctors').url, options);
 }
-function remove(entity: string, id: number) {
+async function remove(entity: string, id: number) {
     if (
-        window.confirm(
-            'Hapus data ini? Data yang masih digunakan tidak dapat dihapus.',
+        await confirmAction(
+            'Hapus data ini?',
+            'Data yang masih digunakan harus dinonaktifkan.',
+            'Hapus data',
         )
     )
         router.delete(destroy({ entity, id }).url, { preserveScroll: true });
@@ -85,7 +88,9 @@ function remove(entity: string, id: number) {
         title="Poliklinik & dokter"
         description="Kelola layanan, tarif administrasi, dan tenaga dokter. Nonaktifkan data yang sudah memiliki riwayat kunjungan."
     >
-        <section class="mb-10 grid gap-6 xl:grid-cols-3">
+        <section
+            class="mb-10 grid items-start gap-6 @min-[62rem]/content:grid-cols-[minmax(17rem,1fr)_minmax(0,2fr)]"
+        >
             <form class="card flex flex-col gap-4" @submit.prevent="savePoli">
                 <h2 class="text-lg font-semibold">
                     {{ poliId ? 'Edit poliklinik' : 'Tambah poliklinik' }}
@@ -96,7 +101,7 @@ function remove(entity: string, id: number) {
                         required
                         maxlength="100"
                 /></label>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="clinic-grid gap-4 [--clinic-column-min:7rem]">
                     <label class="field"
                         >Kode<input
                             v-model="poli.code"
@@ -120,7 +125,7 @@ function remove(entity: string, id: number) {
                     ><input
                         v-model="poli.is_active"
                         type="checkbox"
-                        class="size-4 accent-teal-700"
+                        class="size-4 accent-blue-700"
                     />
                     Aktif menerima pasien</label
                 >
@@ -140,7 +145,12 @@ function remove(entity: string, id: number) {
                     </button>
                 </div>
             </form>
-            <div class="table-wrap h-fit xl:col-span-2">
+            <div
+                class="table-wrap h-fit"
+                role="region"
+                tabindex="0"
+                aria-label="Daftar poliklinik"
+            >
                 <table class="w-full">
                     <thead>
                         <tr>
@@ -169,7 +179,7 @@ function remove(entity: string, id: number) {
                             <td>
                                 <div class="flex gap-3 text-xs">
                                     <button
-                                        class="text-teal-700 dark:text-teal-400"
+                                        class="text-blue-700 dark:text-blue-400"
                                         @click="editPoli(item)"
                                     >
                                         Edit</button
@@ -194,7 +204,9 @@ function remove(entity: string, id: number) {
                 </table>
             </div>
         </section>
-        <section class="grid gap-6 xl:grid-cols-3">
+        <section
+            class="grid items-start gap-6 @min-[62rem]/content:grid-cols-[minmax(17rem,1fr)_minmax(0,2fr)]"
+        >
             <form class="card flex flex-col gap-4" @submit.prevent="saveDoctor">
                 <h2 class="text-lg font-semibold">
                     {{ doctorId ? 'Edit dokter' : 'Tambah dokter' }}
@@ -230,7 +242,7 @@ function remove(entity: string, id: number) {
                     ><input
                         v-model="doctor.is_active"
                         type="checkbox"
-                        class="size-4 accent-teal-700"
+                        class="size-4 accent-blue-700"
                     />
                     Dokter aktif</label
                 >
@@ -250,7 +262,12 @@ function remove(entity: string, id: number) {
                     </button>
                 </div>
             </form>
-            <div class="table-wrap h-fit xl:col-span-2">
+            <div
+                class="table-wrap h-fit"
+                role="region"
+                tabindex="0"
+                aria-label="Daftar dokter"
+            >
                 <table class="w-full">
                     <thead>
                         <tr>
@@ -278,7 +295,7 @@ function remove(entity: string, id: number) {
                             <td>
                                 <div class="flex gap-3 text-xs">
                                     <button
-                                        class="text-teal-700 dark:text-teal-400"
+                                        class="text-blue-700 dark:text-blue-400"
                                         @click="editDoctor(item)"
                                     >
                                         Edit</button

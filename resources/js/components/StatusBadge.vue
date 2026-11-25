@@ -7,7 +7,7 @@ defineProps<{ status: string }>();
         :class="[
             'inline-flex rounded-full px-2.5 py-1 text-xs font-medium',
             status === 'completed'
-                ? 'bg-teal-50 text-teal-800 dark:bg-teal-950 dark:text-teal-300'
+                ? 'bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
                 : status === 'cancelled'
                   ? 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300'
                   : status === 'examining'

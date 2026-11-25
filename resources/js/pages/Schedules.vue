@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { reactive } from 'vue';
+import { reactive, ref, watch } from 'vue';
 import { Link, router, usePoll } from '@inertiajs/vue3';
 import ClinicLayout from '@/components/ClinicLayout.vue';
+import DatePicker from '@/components/DatePicker.vue';
 import ScheduleCards from '@/components/ScheduleCards.vue';
 import { schedules as explore } from '@/routes';
 import type { Polyclinic, Schedule } from '@/types/clinic';
@@ -18,13 +19,33 @@ const props = defineProps<{
         reservation_date: string;
     } | null;
 }>();
+const loading = ref(false);
 const filters = reactive({ ...props.filters });
+watch(
+    () => props.filters,
+    (value) => Object.assign(filters, value),
+);
 function search() {
     router.get(explore().url, filters, {
         preserveState: true,
         preserveScroll: true,
+        onStart: () => {
+            loading.value = true;
+        },
+        onError: () => {
+            Object.assign(filters, props.filters);
+        },
+        onFinish: () => {
+            loading.value = false;
+        },
     });
 }
+watch(
+    () => filters.date,
+    (date) => {
+        if (date !== props.filters.date) search();
+    },
+);
 usePoll(15000, { only: ['schedules', 'activeReservation'] });
 </script>
 <template>
@@ -57,14 +78,14 @@ usePoll(15000, { only: ['schedules', 'activeReservation'] });
             class="card mb-7 flex flex-wrap items-end gap-4"
             @submit.prevent="search"
         >
-            <label class="field min-w-48 flex-1"
-                >Tanggal kunjungan<input
-                    v-model="filters.date"
-                    type="date"
-                    :min="today"
-                    :max="maxDate"
-                    required /></label
-            ><label class="field min-w-48 flex-1"
+            <DatePicker
+                v-model="filters.date"
+                label="Tanggal kunjungan"
+                :min="today"
+                :max="maxDate"
+                class="min-w-0 flex-[1_1_12rem]"
+            />
+            <label class="field min-w-0 flex-[1_1_12rem]"
                 >Poliklinik<select v-model="filters.polyclinic">
                     <option value="">Semua poliklinik</option>
                     <option
@@ -85,7 +106,11 @@ usePoll(15000, { only: ['schedules', 'activeReservation'] });
             Sesi yang masih tersedia ditampilkan lebih dahulu. Sesi penuh atau
             sudah dimulai tetap ditampilkan sebagai informasi.
         </p>
+        <p v-if="loading" role="status" class="card text-sm text-slate-500">
+            Memuat jadwal dokter…
+        </p>
         <ScheduleCards
+            v-else
             :schedules="schedules"
             :date="props.filters.date"
             :active-reservation-id="activeReservation?.id ?? null"

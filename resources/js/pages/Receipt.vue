@@ -20,7 +20,7 @@ function print() {
             >
                 <div>
                     <h2
-                        class="text-2xl font-bold text-teal-800 dark:text-teal-300"
+                        class="text-2xl font-bold text-blue-800 dark:text-blue-300"
                     >
                         Hospia
                     </h2>
@@ -30,7 +30,7 @@ function print() {
                 </div>
                 <div class="text-right">
                     <span
-                        class="rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800"
+                        class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800"
                         >LUNAS</span
                     >
                     <p class="mt-4 font-mono text-xs">
@@ -40,7 +40,9 @@ function print() {
                     </p>
                 </div>
             </div>
-            <div class="grid gap-6 py-7 text-sm sm:grid-cols-2">
+            <div
+                class="grid gap-6 py-7 text-sm @min-[34rem]/content:grid-cols-2"
+            >
                 <div>
                     <p class="text-xs text-slate-400">DITERBITKAN UNTUK</p>
                     <p class="mt-2 font-semibold">

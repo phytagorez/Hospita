@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
+import DatePicker from '@/components/DatePicker.vue';
+import { confirmAction } from '@/lib/alerts';
 import ClinicLayout from '@/components/ClinicLayout.vue';
 import { store, update, destroy } from '@/routes/admin/master';
 import { days, type Doctor, type Schedule } from '@/types/clinic';
-defineProps<{ doctors: Doctor[]; schedules: Schedule[] }>();
+defineProps<{ doctors: Doctor[]; schedules: Schedule[]; today: string }>();
 const editing = ref<number | null>(null);
 const form = useForm({
     doctor_id: '' as number | string,
@@ -43,10 +45,12 @@ function submit() {
         );
     else form.post(store('schedules').url, options);
 }
-function remove(id: number) {
+async function remove(id: number) {
     if (
-        window.confirm(
-            'Hapus sesi ini? Sesi yang memiliki reservasi tidak dapat dihapus.',
+        await confirmAction(
+            'Hapus sesi praktik?',
+            'Sesi dengan riwayat reservasi harus dinonaktifkan.',
+            'Hapus sesi',
         )
     )
         router.delete(destroy({ entity: 'schedules', id }).url, {
@@ -63,7 +67,9 @@ function remove(id: number) {
             <h2 class="text-lg font-semibold">
                 {{ editing ? 'Edit sesi praktik' : 'Tambah sesi praktik' }}
             </h2>
-            <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            <div
+                class="grid gap-5 @min-[29rem]/content:grid-cols-2 @min-[56rem]/content:grid-cols-4"
+            >
                 <label class="field"
                     >Dokter<select v-model="form.doctor_id" required>
                         <option value="" disabled>Pilih dokter</option>
@@ -97,16 +103,19 @@ function remove(id: number) {
                         type="number"
                         min="1"
                         max="200"
-                        required /></label
-                ><label class="field"
-                    >Tutup khusus tanggal (opsional)<input
-                        v-model="form.closed_date"
-                        type="date" /></label
-                ><label class="flex items-center gap-2 self-end py-3 text-sm"
+                        required
+                /></label>
+                <DatePicker
+                    v-model="form.closed_date"
+                    label="Tanggal tutup (opsional)"
+                    :min="today"
+                    clearable
+                />
+                <label class="flex items-center gap-2 self-end py-3 text-sm"
                     ><input
                         v-model="form.is_active"
                         type="checkbox"
-                        class="size-4 accent-teal-700"
+                        class="size-4 accent-blue-700"
                     />
                     Jadwal aktif</label
                 >
@@ -131,8 +140,13 @@ function remove(id: number) {
                 Hubungi pasien terdampak untuk penjadwalan ulang.
             </p>
         </form>
-        <div class="table-wrap">
-            <table class="w-full whitespace-nowrap">
+        <div
+            class="table-wrap"
+            role="region"
+            tabindex="0"
+            aria-label="Daftar sesi praktik"
+        >
+            <table class="w-full">
                 <thead>
                     <tr>
                         <th>Dokter / poli</th>
@@ -162,7 +176,7 @@ function remove(id: number) {
                             <span
                                 :class="
                                     item.is_active
-                                        ? 'text-teal-700 dark:text-teal-400'
+                                        ? 'text-blue-700 dark:text-blue-400'
                                         : 'text-slate-400'
                                 "
                                 >{{
@@ -179,7 +193,7 @@ function remove(id: number) {
                         <td>
                             <div class="flex gap-3 text-xs">
                                 <button
-                                    class="text-teal-700 dark:text-teal-400"
+                                    class="text-blue-700 dark:text-blue-400"
                                     @click="edit(item)"
                                 >
                                     Edit</button
