@@ -16,17 +16,20 @@ defineProps<{ reservations: Reservation[]; showPatient?: boolean }>();
         <table class="w-full">
             <thead>
                 <tr>
-                    <th>Tiket / tanggal</th>
-                    <th v-if="showPatient">Pasien</th>
-                    <th>Dokter & poli</th>
-                    <th>Antrean</th>
-                    <th>Status</th>
-                    <th></th>
+                    <th scope="col">Tiket / tanggal</th>
+                    <th v-if="showPatient" scope="col">Pasien</th>
+                    <th scope="col">Dokter & poli</th>
+                    <th scope="col">Antrean</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Tindakan</th>
                 </tr>
             </thead>
             <tbody>
                 <tr v-for="item in reservations" :key="item.id">
-                    <td>
+                    <th
+                        scope="row"
+                        class="border-t border-slate-100 py-4 text-sm font-normal tracking-normal normal-case dark:border-slate-800"
+                    >
                         <Link
                             :href="show(item.id)"
                             class="font-mono text-xs font-semibold text-blue-700 dark:text-blue-400"
@@ -38,7 +41,7 @@ defineProps<{ reservations: Reservation[]; showPatient?: boolean }>();
                         ><small class="mt-1 block text-xs text-slate-400">{{
                             dateLabel(item.reservation_date)
                         }}</small>
-                    </td>
+                    </th>
                     <td v-if="showPatient">{{ item.patient.user.name }}</td>
                     <td>
                         {{ item.schedule.doctor.name

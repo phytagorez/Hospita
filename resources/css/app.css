@@ -43,6 +43,13 @@
     .clinic-frame {
         padding-inline: var(--clinic-gutter);
     }
+    .clinic-drawer:modal {
+        overscroll-behavior: contain;
+    }
+    .clinic-drawer::backdrop {
+        overflow: hidden;
+        overscroll-behavior: contain;
+    }
     .clinic-grid {
         display: grid;
         grid-template-columns: repeat(

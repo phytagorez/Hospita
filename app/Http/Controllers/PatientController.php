@@ -44,7 +44,10 @@ class PatientController extends Controller
         $data = $request->validate(['search' => ['nullable', 'string', 'max:100']]);
         $search = $data['search'] ?? '';
         $patients = PatientProfile::with('user')->withCount('reservations')
-            ->when($search, fn ($query) => $query->where(fn ($q) => $q->where('no_rm', 'like', "%{$search}%")->orWhere('nik', 'like', "%{$search}%")->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%"))))
+            ->when($search !== '', fn ($query) => $query->where(fn ($patients) => $patients
+                ->where('no_rm', 'like', "%{$search}%")
+                ->orWhere('nik', 'like', "%{$search}%")
+                ->orWhereHas('user', fn ($users) => $users->where('name', 'like', "%{$search}%"))))
             ->orderByDesc('id')->paginate(15)->withQueryString();
 
         return Inertia::render('Patients', ['patients' => $patients, 'search' => $search]);
@@ -52,6 +55,9 @@ class PatientController extends Controller
 
     public function show(PatientProfile $patient): Response
     {
-        return Inertia::render('PatientDetail', ['patient' => $patient->load('user'), 'reservations' => $patient->reservations()->with(['schedule.doctor.polyclinic', 'transaction'])->orderByDesc('reservation_date')->paginate(15)]);
+        $reservations = $patient->reservations()->with(['schedule.doctor.polyclinic', 'transaction'])
+            ->orderByDesc('reservation_date')->orderByDesc('id')->paginate(15);
+
+        return Inertia::render('PatientDetail', ['patient' => $patient->load('user'), 'reservations' => $reservations]);
     }
 }

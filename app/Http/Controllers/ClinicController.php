@@ -39,18 +39,13 @@ class ClinicController extends Controller
             $query->where('patient_id', $request->user()->patientProfile->id);
         }
         $today = (clone $query)->whereDate('reservation_date', today())->get();
-        $week = collect(range(6, 0))->map(function (int $days) {
-            $date = today()->subDays($days);
-
-            return ['date' => $date->translatedFormat('D'), 'count' => Reservation::whereDate('reservation_date', $date)->count()];
-        });
 
         return Inertia::render('Dashboard', [
             'stats' => ['total' => $today->count(), 'online' => $today->where('booking_type', 'online')->count(),
                 'waiting' => $today->whereIn('status', ['waiting', 'examining'])->count(),
                 'walk_in' => $today->where('booking_type', 'walk_in')->count(), 'completed' => $today->where('status', 'completed')->count()],
-            'reservations' => (clone $query)->whereDate('reservation_date', '>=', today())->whereIn('status', ['booked', 'waiting', 'examining', 'skipped'])->orderBy('reservation_date')->orderBy('queue_number')->limit(20)->get(),
-            'monitor' => $this->monitor(), 'week' => $admin ? $week : [],
+            'reservations' => (clone $query)->whereDate('reservation_date', '>=', today())->whereIn('status', ['booked', 'waiting', 'examining', 'skipped'])->orderBy('reservation_date')->orderBy('queue_number')->orderBy('id')->limit(20)->get(),
+            'monitor' => $this->monitor(), 'week' => $admin ? $this->weeklyReservationCounts() : [],
             'adminOverview' => $admin ? [
                 'schedules' => DoctorSchedule::with('doctor.polyclinic')
                     ->where('day_of_week', today()->dayOfWeek)->where('is_active', true)
@@ -63,6 +58,24 @@ class ClinicController extends Controller
                 'date' => today()->translatedFormat('l, d F Y'),
             ] : null,
         ]);
+    }
+
+    /** @return list<array{date: string, count: int}> */
+    private function weeklyReservationCounts(): array
+    {
+        $end = today();
+        $start = $end->copy()->subDays(6);
+        $counts = Reservation::query()->toBase()
+            ->whereBetween('reservation_date', [$start->toDateString(), $end->toDateString()])
+            ->selectRaw('reservation_date, count(*) as reservation_count')
+            ->groupBy('reservation_date')
+            ->pluck('reservation_count', 'reservation_date');
+
+        return array_map(static function (int $offset) use ($start, $counts): array {
+            $date = $start->copy()->addDays($offset);
+
+            return ['date' => $date->translatedFormat('D'), 'count' => (int) $counts->get($date->toDateString(), 0)];
+        }, range(0, 6));
     }
 
     public function monitor(): mixed

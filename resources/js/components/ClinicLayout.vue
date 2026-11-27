@@ -25,26 +25,83 @@ withDefaults(
 );
 const page = usePage();
 const user = computed(() => page.props.auth.user);
-const open = ref(false);
+const drawerOpen = ref(false);
+const desktopSidebar = ref(true);
+const sidebar = ref<HTMLElement>();
+let pressedBackdrop = false;
 const compactOverride = ref<boolean | null>(null);
 const roomySidebar = ref(false);
 const compact = computed(() => compactOverride.value ?? !roomySidebar.value);
 const compactPreference = 'hospia-sidebar-compact';
-let sidebarMedia: MediaQueryList | undefined;
+let desktopMedia: MediaQueryList | undefined;
+let roomyMedia: MediaQueryList | undefined;
+
 function updateSidebarWidth() {
-    roomySidebar.value = sidebarMedia?.matches ?? false;
+    if (desktopMedia?.matches) closeDrawer();
+    desktopSidebar.value = desktopMedia?.matches ?? true;
+    roomySidebar.value = roomyMedia?.matches ?? false;
 }
+
+function openDrawer() {
+    if (!(sidebar.value instanceof HTMLDialogElement)) return;
+
+    pressedBackdrop = false;
+    sidebar.value.showModal();
+    drawerOpen.value = true;
+}
+
+function closeDrawer() {
+    if (sidebar.value instanceof HTMLDialogElement && sidebar.value.open) {
+        sidebar.value.close();
+    }
+    drawerOpen.value = false;
+}
+
+function isOutsideDrawer(event: PointerEvent, dialog: HTMLDialogElement) {
+    const bounds = dialog.getBoundingClientRect();
+
+    return (
+        event.clientX < bounds.left ||
+        event.clientX > bounds.right ||
+        event.clientY < bounds.top ||
+        event.clientY > bounds.bottom
+    );
+}
+
+function trackDrawerPress(event: PointerEvent) {
+    const dialog = event.currentTarget;
+    pressedBackdrop =
+        dialog instanceof HTMLDialogElement &&
+        !('closedBy' in HTMLDialogElement.prototype) &&
+        isOutsideDrawer(event, dialog);
+}
+
+function closeDrawerOnBackdrop(event: PointerEvent) {
+    const dialog = event.currentTarget;
+    if (
+        pressedBackdrop &&
+        dialog instanceof HTMLDialogElement &&
+        isOutsideDrawer(event, dialog)
+    ) {
+        closeDrawer();
+    }
+    pressedBackdrop = false;
+}
+
 onMounted(() => {
     const saved = window.localStorage.getItem(compactPreference);
     compactOverride.value =
         saved === 'true' ? true : saved === 'false' ? false : null;
-    sidebarMedia = window.matchMedia('(min-width: 80rem)');
+    desktopMedia = window.matchMedia('(min-width: 64rem)');
+    roomyMedia = window.matchMedia('(min-width: 80rem)');
     updateSidebarWidth();
-    sidebarMedia.addEventListener('change', updateSidebarWidth);
+    desktopMedia.addEventListener('change', updateSidebarWidth);
+    roomyMedia.addEventListener('change', updateSidebarWidth);
 });
-onUnmounted(() =>
-    sidebarMedia?.removeEventListener('change', updateSidebarWidth),
-);
+onUnmounted(() => {
+    desktopMedia?.removeEventListener('change', updateSidebarWidth);
+    roomyMedia?.removeEventListener('change', updateSidebarWidth);
+});
 function toggleSidebar() {
     const next = !compact.value;
     compactOverride.value = next === !roomySidebar.value ? null : next;
@@ -107,21 +164,28 @@ const todayLabel = new Intl.DateTimeFormat('id-ID', {
         class="clinic-shell min-h-screen bg-[#f4f7fd] text-slate-800 dark:bg-slate-950 dark:text-slate-100"
     >
         <Head :title="title" />
-        <button
-            v-if="open && user && !publicPage"
-            aria-label="Tutup navigasi"
-            class="fixed inset-0 z-30 bg-slate-950/40 lg:hidden"
-            @click="open = false"
-        />
-        <aside
+        <a
+            href="#clinic-content"
+            class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-lg focus:bg-blue-700 focus:px-4 focus:py-3 focus:text-white print:hidden"
+            >Langsung ke konten</a
+        >
+        <component
             v-if="user && !publicPage"
+            :is="desktopSidebar ? 'aside' : 'dialog'"
             id="clinic-sidebar"
+            ref="sidebar"
+            :aria-label="desktopSidebar ? undefined : 'Menu utama'"
+            :closedby="desktopSidebar ? undefined : 'any'"
             :class="[
-                open ? 'visible translate-x-0' : 'invisible -translate-x-full',
                 compact ? 'lg:w-20' : 'lg:w-60',
-                'fixed inset-y-0 left-0 z-40 flex w-60 max-w-[calc(100vw-2rem)] flex-col overflow-y-auto border-r border-slate-200 bg-white px-3 pb-4 text-slate-700 transition-[translate] motion-reduce:transition-none lg:visible lg:translate-x-0 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 print:hidden',
+                desktopSidebar
+                    ? 'hidden lg:flex'
+                    : 'clinic-drawer m-0 h-dvh max-h-none w-60 max-w-[calc(100vw-2rem)] backdrop:bg-slate-950/40 open:flex lg:hidden',
+                'fixed inset-y-0 left-0 z-40 flex-col overflow-y-auto border-r border-slate-200 bg-white px-3 pb-4 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 print:hidden',
             ]"
-            @keydown.esc="open = false"
+            @close="drawerOpen = false"
+            @pointerdown="trackDrawerPress"
+            @pointerup="closeDrawerOnBackdrop"
         >
             <div
                 class="mb-6 flex h-[72px] shrink-0 items-center gap-2 border-b border-slate-100 px-1 dark:border-slate-800"
@@ -144,10 +208,12 @@ const todayLabel = new Intl.DateTimeFormat('id-ID', {
                     </span>
                 </Link>
                 <button
+                    v-if="!desktopSidebar"
                     type="button"
-                    class="ml-auto rounded-lg px-2 text-xl lg:hidden"
+                    class="ml-auto grid size-9 place-items-center rounded-lg text-xl"
                     aria-label="Tutup navigasi"
-                    @click="open = false"
+                    autofocus
+                    @click="closeDrawer"
                 >
                     ×
                 </button>
@@ -172,7 +238,7 @@ const todayLabel = new Intl.DateTimeFormat('id-ID', {
                             ? 'bg-blue-50 font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-200'
                             : 'hover:bg-slate-100 hover:text-blue-800 dark:hover:bg-slate-800 dark:hover:text-blue-200',
                     ]"
-                    @click="open = false"
+                    @click="closeDrawer"
                 >
                     <ClinicIcon :name="item.icon" :size="19" class="shrink-0" />
                     <span :class="{ 'lg:sr-only': compact }">{{
@@ -196,7 +262,7 @@ const todayLabel = new Intl.DateTimeFormat('id-ID', {
                     >
                 </button>
             </div>
-        </aside>
+        </component>
         <div
             :class="
                 user && !publicPage
@@ -234,11 +300,13 @@ const todayLabel = new Intl.DateTimeFormat('id-ID', {
                         class="flex min-w-0 items-center gap-2 sm:gap-4"
                     >
                         <button
+                            type="button"
                             class="btn-secondary p-2 lg:hidden"
-                            :aria-expanded="open"
+                            :aria-expanded="drawerOpen"
                             aria-label="Buka navigasi"
                             aria-controls="clinic-sidebar"
-                            @click="open = !open"
+                            aria-haspopup="dialog"
+                            @click="openDrawer"
                         >
                             <ClinicIcon name="menu" />
                         </button>
@@ -337,8 +405,10 @@ const todayLabel = new Intl.DateTimeFormat('id-ID', {
                 </div>
             </header>
             <main
+                :id="publicPage ? 'clinic-content' : undefined"
+                :tabindex="publicPage ? -1 : undefined"
                 :class="[
-                    'clinic-frame @container/content mx-auto min-w-0 py-[clamp(1.25rem,2.5vw,2.75rem)] print:px-0',
+                    'clinic-frame @container/content mx-auto min-w-0 scroll-mt-24 py-[clamp(1.25rem,2.5vw,2.75rem)] print:px-0',
                     publicPage ? 'max-w-[88rem]' : 'max-w-[112rem]',
                 ]"
             >
@@ -347,7 +417,9 @@ const todayLabel = new Intl.DateTimeFormat('id-ID', {
                         {{ eyebrow }}
                     </p>
                     <h1
-                        class="text-[clamp(1.5rem,1.1rem+1.25cqi,2.25rem)] font-semibold tracking-tight"
+                        id="clinic-content"
+                        tabindex="-1"
+                        class="scroll-mt-24 text-[clamp(1.5rem,1.1rem+1.25cqi,2.25rem)] font-semibold tracking-tight"
                     >
                         {{ title }}
                     </h1>

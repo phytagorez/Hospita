@@ -72,9 +72,14 @@ export type Reservation = {
     admin_fee: number;
     transaction: Payment | null;
 };
+export type PaginationLink = {
+    url: string | null;
+    label: string;
+    active: boolean;
+};
 export type Pagination<T> = {
     data: T[];
-    links: { url: string | null; label: string; active: boolean }[];
+    links: PaginationLink[];
     total: number;
 };
 export type Monitor = {
